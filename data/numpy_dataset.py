@@ -40,7 +40,7 @@ class NumpyDataset(BaseDataset):
         # read a image given a random integer index
         AB_path = self.AB_paths[index]
         AB_numpy = np.load(AB_path)
-        A = Image.fromarray(AB_numpy['A'])
+        A = Image.fromarray(AB_numpy['A'][:, :, 0:3])
         B = Image.fromarray(AB_numpy['B'][:, :, 0]).convert('RGB')
 
         # apply the same transform to both A and B

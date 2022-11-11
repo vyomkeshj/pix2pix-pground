@@ -136,8 +136,8 @@ class Visualizer():
                 label_html_row = ''
                 images = []
                 idx = 0
-                for label, image in visuals.items():
-                    image_numpy = util.tensor2im(image)
+                for label, image_tensor in visuals.items():
+                    image_numpy = util.tensor2im(image_tensor)
                     label_html_row += '<td>%s</td>' % label
                     images.append(image_numpy.transpose([2, 0, 1]))
                     idx += 1
@@ -188,29 +188,29 @@ class Visualizer():
                 result_table.add_data(*table_row)
                 self.wandb_run.log({"Result": result_table})
 
-        if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
-            self.saved = True
-            # save images to the disk
-            for label, image in visuals.items():
-                image_numpy = util.tensor2im(image)
-                for i, img in enumerate(image_numpy):
-                    img_path = os.path.join(self.img_dir, 'epoch%.3d_%s_%s.png' % (epoch, label, i))
-                    util.save_image(img, img_path)
-
-            # update website
-            webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=1)
-            for n in range(epoch, 0, -1):
-                webpage.add_header('epoch [%d]' % n)
-                ims, txts, links = [], [], []
-
-                for label, image_numpy in visuals.items():
-                    image_numpy = util.tensor2im(image)
-                    img_path = 'epoch%.3d_%s.png' % (n, label)
-                    ims.append(img_path)
-                    txts.append(label)
-                    links.append(img_path)
-                webpage.add_images(ims, txts, links, width=self.win_size)
-            webpage.save()
+        # if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
+        #     self.saved = True
+        #     # save images to the disk
+        #     for label, image in visuals.items():
+        #         image_numpy = util.tensor2im(image)
+        #         for i, img in enumerate(image_numpy):
+        #             img_path = os.path.join(self.img_dir, 'epoch%.3d_%s_%s.png' % (epoch, label, i))
+        #             util.save_image(img, img_path)
+        #
+        #     # update website
+        #     webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=1)
+        #     for n in range(epoch, 0, -1):
+        #         webpage.add_header('epoch [%d]' % n)
+        #         ims, txts, links = [], [], []
+        #
+        #         for label, image_numpy in visuals.items():
+        #             image_numpy = util.tensor2im(image)
+        #             img_path = 'epoch%.3d_%s.png' % (n, label)
+        #             ims.append(img_path)
+        #             txts.append(label)
+        #             links.append(img_path)
+        #         webpage.add_images(ims, txts, links, width=self.win_size)
+        #     webpage.save()
 
     def plot_current_losses(self, epoch, counter_ratio, losses):
         """display the current losses on visdom display: dictionary of error labels and values
