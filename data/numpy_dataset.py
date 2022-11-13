@@ -9,7 +9,7 @@ def create_mask(mask_matrix, id2label_id):
     """ Takes a mask matrix and a label id, returns a boolean mask with just the areas with the label id """
     mask = np.ones_like(mask_matrix) * id2label_id
     mask = 1 * np.equal(mask, mask_matrix)
-    return mask
+    return mask[...].astype(np.uint8)
 
 
 class NumpyDataset(BaseDataset):
@@ -54,9 +54,13 @@ class NumpyDataset(BaseDataset):
         # fixme: use correct indices
         trees_mask = create_mask(A_SEG, 41)
         person_mask = create_mask(A_SEG, 28)
-        M_stack = np.dstack((trees_mask, person_mask))
+
+        # print("trees mask: "+str(trees_mask.shape))
+        # print("B: "+str(AB_numpy['B'].shape))
 
         B = Image.fromarray(AB_numpy['B'][:, :, 0]).convert('RGB')
+        trees_mask = Image.fromarray(trees_mask).convert('RGB')
+        person_mask = Image.fromarray(person_mask).convert('RGB')
 
         # apply the same transform to both A and B
         transform_params = get_params(self.opt, A_RGB.size)
@@ -64,9 +68,13 @@ class NumpyDataset(BaseDataset):
         B_transform = get_transform(self.opt, transform_params, grayscale=(self.output_nc == 1))
         Mask_transform = get_transform(self.opt, transform_params, grayscale=(self.output_nc == 1))
 
+        # trees = Mask_transform(trees_mask)
         A = A_transform(A_RGB)
         B = B_transform(B)
+        trees_mask = np.array(Mask_transform(trees_mask))[0,:,:][np.newaxis, ...]
+        person_mask = np.array(Mask_transform(person_mask))[0,:,:][np.newaxis, ...]
 
+        M_stack = np.concatenate((trees_mask, person_mask), axis = 0)
 
         return {'A': A, 'Masks': M_stack, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
