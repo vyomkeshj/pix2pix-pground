@@ -80,14 +80,13 @@ class Pix2PixModel(BaseModel):
         The option 'direction' can be used to swap images in domain A and domain B.
         """
         AtoB = self.opt.direction == 'AtoB'
-        self.real_A = input['A' if AtoB else 'B'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device)
-        self.M_stack = input['Masks'].to(self.device)
-        self.stacked_A = torch.concat((self.real_A, self.M_stack), axis=1)
+        self.real_A = input['A'].to(self.device)
+        self.real_B = input['B'].to(self.device)
 
-        # real_a_shape = self.real_A.shape
-        # real_stack_shape = self.stacked_A.shape
-        # print(f"shape of real A: {real_a_shape}, stacked is {real_stack_shape}")
+        self.stacked_A = self.real_A
+        # append the mask dimensions
+        for key, value in input['M_dict'].items():
+            self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=1)
 
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
