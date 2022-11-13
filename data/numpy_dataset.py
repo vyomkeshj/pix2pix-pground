@@ -52,8 +52,8 @@ class NumpyDataset(BaseDataset):
         A_SEG = AB_numpy['A'][:, :, 3]
         # Separate A_seg into one hot matrices for classes of interest.
         # fixme: use correct indices
-        trees_mask = create_mask(A_SEG, 41)
-        person_mask = create_mask(A_SEG, 28)
+        trees_mask = create_mask(A_SEG, 104)
+        person_mask = create_mask(A_SEG, 127)
 
         # print("trees mask: "+str(trees_mask.shape))
         # print("B: "+str(AB_numpy['B'].shape))
@@ -74,7 +74,7 @@ class NumpyDataset(BaseDataset):
         trees_mask = np.array(Mask_transform(trees_mask))[0,:,:][np.newaxis, ...]
         person_mask = np.array(Mask_transform(person_mask))[0,:,:][np.newaxis, ...]
 
-        M_stack = np.concatenate((trees_mask, person_mask), axis = 0)
+        M_stack = np.concatenate((person_mask, trees_mask), axis = 0)
 
         return {'A': A, 'Masks': M_stack, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
 
