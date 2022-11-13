@@ -1,6 +1,7 @@
 import torch
 from .base_model import BaseModel
 from . import networks
+from collections import OrderedDict
 
 
 class Pix2PixModel(BaseModel):
@@ -30,7 +31,7 @@ class Pix2PixModel(BaseModel):
         By default, we use vanilla GAN loss, UNet with batchnorm, and aligned datasets.
         """
         # changing the default values to match the pix2pix paper (https://phillipi.github.io/pix2pix/)
-        parser.set_defaults(norm='batch', netG='unet_128', dataset_mode='numpy')
+        parser.set_defaults(norm='batch', netG='unet_256', dataset_mode='numpy')
         if is_train:
             parser.set_defaults(pool_size=0, gan_mode='vanilla')
             parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
@@ -47,7 +48,7 @@ class Pix2PixModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        self.visual_names = ['real_A', 'fake_B', 'real_B']
+        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'vegetation_mask']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G', 'D']
@@ -75,13 +76,17 @@ class Pix2PixModel(BaseModel):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
-            input (dict): the dict returned by the data loader
+            input (dict): include the data itself and its metadata information.
+
+        The option 'direction' can be used to swap images in domain A and domain B.
         """
-        self.real_A = input['rgb_channels'].to(self.device)
-        self.real_B = input['thermal_channel'].to(self.device)
+        self.rgb_channels = input['rgb_channels'].to(self.device)
+        self.thermal_channel = input['thermal_channel'].to(self.device)
         self.mask_dict = input['mask_dict']
 
-        self.stacked_A = self.real_A
+        self.stacked_A = self.rgb_channels
+        self.person_mask = self.mask_dict['person_mask']
+        self.vegetation_mask = self.mask_dict['trees_mask']
         # created a stacked frame with rgb + masks
         for key, value in self.mask_dict.items():
             self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=1)
@@ -89,19 +94,19 @@ class Pix2PixModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake_B = self.netG(self.stacked_A)  # G(A)
+        self.generated_thermal = self.netG(self.stacked_A)  # G(A)
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
-        # Fake; stop backprop to the generator by detaching fake_B
-        fake_AB = torch.cat((self.stacked_A, self.fake_B),
+        # Fake; stop backprop to the generator by detaching generated_thermal
+        fake_AB = torch.cat((self.stacked_A, self.generated_thermal),
                             1)  # we use conditional GANs; we need to feed both input and output to the discriminator
-        # fake_AB = torch.cat((self.real_A, self.M_stack, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+        # fake_AB = torch.cat((self.real_A, self.M_stack, self.generated_thermal), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
         # Real
-        real_AB = torch.cat((self.stacked_A, self.real_B), 1)
-        # real_AB = torch.cat((self.real_A, self.M_stack, self.real_B), 1)
+        real_AB = torch.cat((self.stacked_A, self.thermal_channel), 1)
+        # real_AB = torch.cat((self.real_A, self.M_stack, self.thermal_channel), 1)
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
         # combine loss and calculate gradients
@@ -111,12 +116,12 @@ class Pix2PixModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         # First, G(A) should fake the discriminator
-        fake_AB = torch.cat((self.stacked_A, self.fake_B), 1)
-        # fake_AB = torch.cat((self.real_A, self.M_stack, self.fake_B), 1)
+        fake_AB = torch.cat((self.stacked_A, self.generated_thermal), 1)
+        # fake_AB = torch.cat((self.real_A, self.M_stack, self.generated_thermal), 1)
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         # Second, G(A) = B
-        self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
+        self.loss_G_L1 = self.criterionL1(self.generated_thermal, self.thermal_channel) * self.opt.lambda_L1
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
         self.loss_G.backward()
@@ -133,3 +138,13 @@ class Pix2PixModel(BaseModel):
         self.optimizer_G.zero_grad()  # set G's gradients to zero
         self.backward_G()  # calculate graidents for G
         self.optimizer_G.step()  # udpate G's weights
+
+    def get_current_visuals(self):
+        """Return visualization images. train.py will display these images with wandb,"""
+        visual_ret = OrderedDict()
+        for name in self.visual_names:
+            if isinstance(name, str):
+                visual_ret[name] = getattr(self, name)
+
+        #todo: keep a dict of visuals
+        return visual_ret

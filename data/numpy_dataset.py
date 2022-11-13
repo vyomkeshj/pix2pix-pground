@@ -39,7 +39,7 @@ class NumpyDataset(BaseDataset):
             opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseDataset.__init__(self, opt)
-        self.data_path = os.path.join(opt.datgit aroot, opt.phase)  # get the image directory
+        self.data_path = os.path.join(opt.dataroot, opt.phase)  # get the image directory
         self.input_files = sorted(load_frames(self.data_path, opt.max_dataset_size))  # get image paths
         assert (self.opt.load_size >= self.opt.crop_size)  # crop_size should be smaller than the size of loaded image
 
