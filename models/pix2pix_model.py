@@ -75,20 +75,17 @@ class Pix2PixModel(BaseModel):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
-            input (dict): include the data itself and its metadata information.
-
-        The option 'direction' can be used to swap images in domain A and domain B.
+            input (dict): the dict returned by the data loader
         """
-        AtoB = self.opt.direction == 'AtoB'
-        self.real_A = input['A'].to(self.device)
-        self.real_B = input['B'].to(self.device)
+        self.real_A = input['rgb_channels'].to(self.device)
+        self.real_B = input['thermal_channel'].to(self.device)
+        self.mask_dict = input['mask_dict']
 
         self.stacked_A = self.real_A
-        # append the mask dimensions
-        for key, value in input['M_dict'].items():
+        # created a stacked frame with rgb + masks
+        for key, value in self.mask_dict.items():
             self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=1)
 
-        self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
