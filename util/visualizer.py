@@ -21,8 +21,13 @@ def save_images(visuals):
     """
     ims_dict = {}
     for label, im_data in visuals.items():
+        print("input image = "+f"label {label}"+str(im_data.shape))
         imgs = util.tensor2im(im_data)
+        gen_thermal = imgs[0].shape
+        print("converted image:: "+str(gen_thermal))
+
         for i, im in enumerate(imgs):
+
             ims_dict[label] = wandb.Image(im)
         wandb.log(ims_dict)
 

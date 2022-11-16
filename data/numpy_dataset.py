@@ -8,12 +8,12 @@ from PIL import Image
 def create_mask(mask_matrix, id2label_id):
     """ Takes a mask matrix and a label id, returns a boolean mask with just the areas with the label id """
     mask = np.ones_like(mask_matrix) * id2label_id
-    mask = 1 * np.equal(mask, mask_matrix)
+    mask = 255. * np.equal(mask, mask_matrix)
     return mask[...].astype(np.uint8)
 
 
 def get_mask_dictionary(segementation_channel, mask_transform):
-    trees_mask = create_mask(segementation_channel, 104)
+    trees_mask = create_mask(segementation_channel, 100)
     person_mask = create_mask(segementation_channel, 127)
 
     trees_mask = Image.fromarray(trees_mask).convert('RGB')
@@ -68,7 +68,7 @@ class NumpyDataset(BaseDataset):
         transform_params = get_params(self.opt, rgb_channels.size)
 
         input_thermal_transform = get_transform(self.opt, transform_params, grayscale=(self.input_nc == 1))
-        mask_transform = get_transform(self.opt, transform_params, grayscale=(self.output_nc == 1))
+        mask_transform = get_transform(self.opt, transform_params)
 
         rgb_channels = input_thermal_transform(rgb_channels)
         thermal_channel = input_thermal_transform(thermal_channel)
