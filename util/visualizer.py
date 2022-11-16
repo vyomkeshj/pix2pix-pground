@@ -13,7 +13,7 @@ except ImportError:
     print('Warning: wandb package cannot be found. error.')
 
 
-def save_images(visuals):
+def save_images(visuals, is_train = True):
     """Save images to the wandb.
 
     Parameters:
@@ -21,11 +21,7 @@ def save_images(visuals):
     """
     ims_dict = {}
     for label, im_data in visuals.items():
-        print("input image = "+f"label {label}"+str(im_data.shape))
-        imgs = util.tensor2im(im_data)
-        gen_thermal = imgs[0].shape
-        print("converted image:: "+str(gen_thermal))
-
+        imgs = util.tensor2im(im_data, is_train)
         for i, im in enumerate(imgs):
 
             ims_dict[label] = wandb.Image(im)

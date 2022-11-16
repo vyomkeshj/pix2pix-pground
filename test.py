@@ -65,4 +65,4 @@ if __name__ == '__main__':
         print(visuals["rgb_channels"].shape)
         print(visuals["generated_thermal"].shape)
 
-        save_images(visuals)
+        save_images(visuals, is_train=False)
