@@ -48,7 +48,7 @@ class Pix2PixModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'vegetation_mask']
+        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'trees_mask', 'sky_mask', 'railroad_mask']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G', 'D']
@@ -86,7 +86,10 @@ class Pix2PixModel(BaseModel):
 
         self.stacked_A = self.rgb_channels
         self.person_mask = self.mask_dict['person_mask']
-        self.vegetation_mask = self.mask_dict['trees_mask']
+        self.trees_mask = self.mask_dict['trees_mask']
+        self.sky_mask = self.mask_dict['sky_mask']
+        self.railroad_mask = self.mask_dict['railroad_mask']
+
         # created a stacked frame with rgb + masks
         for key, value in self.mask_dict.items():
             self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=1)

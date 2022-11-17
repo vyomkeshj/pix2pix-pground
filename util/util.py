@@ -72,7 +72,7 @@ def tensor2im_test(input_image, imtype=np.uint8):
         else:
             return input_image
         image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
-        print("input image into tensor2im= "+str(image_numpy.shape))
+        # print("input image into tensor2im= "+str(image_numpy.shape))
 
         if image_numpy.shape[0] == 1:  # grayscale to RGB
             image_numpy = np.tile(image_numpy, (3, 1, 1))

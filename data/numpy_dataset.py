@@ -5,24 +5,37 @@ from data.numpy_loader import load_frames
 from PIL import Image
 
 
-def create_mask(mask_matrix, id2label_id):
+def create_mask(mask_matrix, id2label_ids):
     """ Takes a mask matrix and a label id, returns a boolean mask with just the areas with the label id """
-    mask = np.ones_like(mask_matrix) * id2label_id
-    mask = 255. * np.equal(mask, mask_matrix)
-    return mask[...].astype(np.uint8)
+    # print(mask_matrix)
+    final_mask = np.zeros_like(mask_matrix)
+    for id in id2label_ids:
+        mask = np.ones_like(mask_matrix) * id
+        mask = np.equal(mask, mask_matrix)
+        final_mask += mask
+    return final_mask.astype(np.uint8)
 
 
 def get_mask_dictionary(segementation_channel, mask_transform):
-    trees_mask = create_mask(segementation_channel, 100)
-    person_mask = create_mask(segementation_channel, 127)
+    trees_mask = create_mask(segementation_channel, [171])
+    person_mask = create_mask(segementation_channel, [122, 123, 124, 125])
+    railroad_mask = create_mask(segementation_channel, [94])
+    sky_mask = create_mask(segementation_channel, [138])
 
     trees_mask = Image.fromarray(trees_mask).convert('RGB')
     person_mask = Image.fromarray(person_mask).convert('RGB')
+    railroad_mask = Image.fromarray(railroad_mask).convert('RGB')
+    sky_mask = Image.fromarray(sky_mask).convert('RGB')
 
     trees_mask = np.array(mask_transform(trees_mask))[0, :, :][np.newaxis, ...]
     person_mask = np.array(mask_transform(person_mask))[0, :, :][np.newaxis, ...]
+    railroad_mask = np.array(mask_transform(railroad_mask))[0, :, :][np.newaxis, ...]
+    sky_mask = np.array(mask_transform(sky_mask))[0, :, :][np.newaxis, ...]
 
-    return {'person_mask': person_mask, 'trees_mask': trees_mask}
+    return {'person_mask': person_mask,
+            'trees_mask': trees_mask,
+            'railroad_mask': railroad_mask,
+            'sky_mask': sky_mask}
 
 
 class NumpyDataset(BaseDataset):
@@ -53,16 +66,12 @@ class NumpyDataset(BaseDataset):
             index - - a random integer for data indexing
 
         """
-
         # read a image given a random integer index
         npz_path = self.input_files[index]
         current_npz_frames = np.load(npz_path)
 
         rgb_channels = Image.fromarray(current_npz_frames['A'][:, :, 0:3])
         thermal_channel = Image.fromarray(current_npz_frames['B'][:, :, 0]).convert('RGB')
-
-        # Separate A_seg into one hot matrices for classes of interest.
-        # fixme: use correct indices
 
         # apply the same transform to both rgb, thermal and mask channels
         transform_params = get_params(self.opt, rgb_channels.size)
