@@ -62,7 +62,7 @@ class Visualizer():
         """Reset the self.saved status"""
         self.saved = False
 
-    def display_current_results(self, visuals, epoch):
+    def display_current_results(self, visuals, epoch, is_val = False):
         """Display current results on wandb
 
         Parameters:
@@ -71,13 +71,14 @@ class Visualizer():
             save_result (bool) - - if save the current results to an HTML file
         """
 
-        # if self.use_wandb:
-        columns = [key for key, _ in visuals.items()]
-        columns.insert(0, 'epoch')
-        result_table = wandb.Table(columns=columns)
-        table_row = [epoch]
-        ims_dict = {}
+        # # if self.use_wandb:
+        # columns = [key for key, _ in visuals.items()]
+        # columns.insert(0, 'epoch')
+        # result_table = wandb.Table(columns=columns)
+        # table_row = [epoch]
+        ims_dict = {"epoch": epoch}
         for label, image in visuals.items():
+            label = label + f"_val" if is_val else label
             mul = 1.0
             if "mask" in label:
                 mul = 100.0
@@ -86,13 +87,15 @@ class Visualizer():
                 image = image[:, 0, :, :]
             image_numpy = util.tensor2im(image*mul)
             wandb_image = wandb.Image(image_numpy)
-            table_row.append(wandb_image)
+            # table_row.append(wandb_image)
             ims_dict[label] = wandb_image
+
         self.wandb_run.log(ims_dict)
-        if epoch != self.current_epoch:
-            self.current_epoch = epoch
-            result_table.add_data(*table_row)
-            self.wandb_run.log({"Result": result_table})
+        #
+        # if epoch != self.current_epoch:
+        #     self.current_epoch = epoch
+        #     result_table.add_data(*table_row)
+        #     self.wandb_run.log({"Result": result_table})
 
     def plot_current_losses(self, losses):
         """display the current losses on wandb display

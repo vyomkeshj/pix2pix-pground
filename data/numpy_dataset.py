@@ -62,18 +62,6 @@ class NumpyDataset(BaseDataset):
 
         self.input_nc = self.opt.input_nc
         self.output_nc = self.opt.output_nc
-        self.transform = alb.Compose([
-            alb.RandomCrop(width=512, height=512),
-            alb.HorizontalFlip(p=0.5),
-            alb.RandomBrightnessContrast(p=0.2),
-            alb.RGBShift (r_shift_limit=20, g_shift_limit=20, b_shift_limit=20, always_apply=False, p=0.5)
-        ], additional_targets={
-            'image': 'image',
-            'thermal_image': 'image',
-            'person_mask': 'mask',
-            'trees_mask': 'mask',
-            'railroad_mask': 'mask',
-            'sky_mask': 'mask'})
 
     def __getitem__(self, index):
         """Return a rgb frame, corresponding masks and thermal frame
@@ -89,11 +77,24 @@ class NumpyDataset(BaseDataset):
         rgb_channels = current_npz_frames['A'][:, :, 0:3]
         mask_channel = current_npz_frames['A'][:, :, 3]
         thermal_channel = current_npz_frames['B'][:, :, 0]
-
+        
+        transform = alb.Compose([
+            alb.Rotate (limit=90, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.8),
+            alb.RandomCrop(width=512, height=512),
+            alb.HorizontalFlip(p=0.5),
+            alb.RandomBrightnessContrast(p=0.2),
+            alb.RGBShift (r_shift_limit=20, g_shift_limit=20, b_shift_limit=20, always_apply=False, p=0.5)
+        ], additional_targets={
+            'image': 'image',
+            'thermal_image': 'image',
+            'person_mask': 'mask',
+            'trees_mask': 'mask',
+            'railroad_mask': 'mask',
+            'sky_mask': 'mask'})
         transformed_image, transformed_thermal, mask_dict = get_transformed_images_masks(rgb_channels,
                                                                                          mask_channel,
                                                                                          thermal_channel,
-                                                                                         self.transform)
+                                                                                         transform)
         # print(f"transformed_image shape: {transformed_image.shape}")
 
         return {'rgb_channels': transformed_image,

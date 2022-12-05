@@ -39,12 +39,10 @@ if __name__ == '__main__':
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
-            # TODO: separate test visualizations from train viz
-            # if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
-                # model.compute_visuals()
-                # visualizer.display_current_results(model.get_current_visuals(), epoch)
+            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+                model.compute_visuals()
+                visualizer.display_current_results(model.get_current_visuals(), epoch)
 
-            # todo: test on the test images and upload to wandb
             if total_iters % test_every_steps == 0:
                 for t_i, test_data in enumerate(test_dataset):
                     if t_i>=test_every_sample_size:
@@ -53,7 +51,7 @@ if __name__ == '__main__':
                     model.test()           # run inference
 
                     visuals = model.get_current_visuals()  # get image results
-                    visualizer.display_current_results(visuals, epoch)
+                    visualizer.display_current_results(visuals, epoch, is_val=True)
 
 
 

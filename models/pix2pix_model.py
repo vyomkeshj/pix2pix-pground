@@ -109,7 +109,6 @@ class Pix2PixModel(BaseModel):
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
         # Real
         real_AB = torch.cat((self.stacked_A, self.thermal_channel), 1)
-        # real_AB = torch.cat((self.real_A, self.M_stack, self.thermal_channel), 1)
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
         # combine loss and calculate gradients
