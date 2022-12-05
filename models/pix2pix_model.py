@@ -81,7 +81,7 @@ class Pix2PixModel(BaseModel):
         The option 'direction' can be used to swap images in domain A and domain B.
         """
         self.rgb_channels = input['rgb_channels'].to(self.device)
-        self.thermal_channel = input['thermal_channel'].to(self.device)
+        self.thermal_channel = torch.permute(input['thermal_channel'], (0, 3, 1, 2)).float().to(self.device)
         self.mask_dict = input['mask_dict']
 
         self.stacked_A = self.rgb_channels
@@ -92,7 +92,8 @@ class Pix2PixModel(BaseModel):
 
         # created a stacked frame with rgb + masks
         for key, value in self.mask_dict.items():
-            self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=1)
+            self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=3)
+        self.stacked_A = torch.permute(self.stacked_A, (0, 3, 1, 2)).float()
 
 
     def forward(self):

@@ -3,6 +3,7 @@ import numpy as np
 from data.base_dataset import BaseDataset, get_params, get_transform
 from data.numpy_loader import load_frames
 from PIL import Image
+import albumentations as alb
 
 
 def create_mask(mask_matrix, id2label_ids):
@@ -16,26 +17,29 @@ def create_mask(mask_matrix, id2label_ids):
     return final_mask.astype(np.uint8)
 
 
-def get_mask_dictionary(segementation_channel, mask_transform):
+def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
+    rgb_channels = input_image[:, :, 0:3]
+
     trees_mask = create_mask(segementation_channel, [171])
     person_mask = create_mask(segementation_channel, [122, 123, 124, 125])
     railroad_mask = create_mask(segementation_channel, [94])
     sky_mask = create_mask(segementation_channel, [138])
 
-    trees_mask = Image.fromarray(trees_mask).convert('RGB')
-    person_mask = Image.fromarray(person_mask).convert('RGB')
-    railroad_mask = Image.fromarray(railroad_mask).convert('RGB')
-    sky_mask = Image.fromarray(sky_mask).convert('RGB')
+    thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
+    # print(f"stacked thermal shape: {thermal_stack.shape}")
 
-    trees_mask = np.array(mask_transform(trees_mask))[0, :, :][np.newaxis, ...]
-    person_mask = np.array(mask_transform(person_mask))[0, :, :][np.newaxis, ...]
-    railroad_mask = np.array(mask_transform(railroad_mask))[0, :, :][np.newaxis, ...]
-    sky_mask = np.array(mask_transform(sky_mask))[0, :, :][np.newaxis, ...]
+    transformed = transform(image = rgb_channels,
+                            thermal_image = thermal_stack,
+                            trees_mask = trees_mask,
+                            person_mask = person_mask,
+                            railroad_mask = railroad_mask,
+                            sky_mask = sky_mask )
 
-    return {'person_mask': person_mask,
-            'trees_mask': trees_mask,
-            'railroad_mask': railroad_mask,
-            'sky_mask': sky_mask}
+    return transformed['image']/255., transformed['thermal_image']/255., {
+            'person_mask': transformed['person_mask'][..., np.newaxis],
+            'trees_mask': transformed['trees_mask'][..., np.newaxis],
+            'railroad_mask': transformed['railroad_mask'][..., np.newaxis],
+            'sky_mask': transformed['sky_mask'][..., np.newaxis]}
 
 
 class NumpyDataset(BaseDataset):
@@ -58,6 +62,18 @@ class NumpyDataset(BaseDataset):
 
         self.input_nc = self.opt.input_nc
         self.output_nc = self.opt.output_nc
+        self.transform = alb.Compose([
+            alb.RandomCrop(width=512, height=512),
+            alb.HorizontalFlip(p=0.5),
+            alb.RandomBrightnessContrast(p=0.2),
+            alb.RGBShift (r_shift_limit=20, g_shift_limit=20, b_shift_limit=20, always_apply=False, p=0.5)
+        ], additional_targets={
+            'image': 'image',
+            'thermal_image': 'image',
+            'person_mask': 'mask',
+            'trees_mask': 'mask',
+            'railroad_mask': 'mask',
+            'sky_mask': 'mask'})
 
     def __getitem__(self, index):
         """Return a rgb frame, corresponding masks and thermal frame
@@ -70,21 +86,19 @@ class NumpyDataset(BaseDataset):
         npz_path = self.input_files[index]
         current_npz_frames = np.load(npz_path)
 
-        rgb_channels = Image.fromarray(current_npz_frames['A'][:, :, 0:3])
-        thermal_channel = Image.fromarray(current_npz_frames['B'][:, :, 0]).convert('RGB')
+        rgb_channels = current_npz_frames['A'][:, :, 0:3]
+        mask_channel = current_npz_frames['A'][:, :, 3]
+        thermal_channel = current_npz_frames['B'][:, :, 0]
 
-        # apply the same transform to both rgb, thermal and mask channels
-        transform_params = get_params(self.opt, rgb_channels.size)
+        transformed_image, transformed_thermal, mask_dict = get_transformed_images_masks(rgb_channels,
+                                                                                         mask_channel,
+                                                                                         thermal_channel,
+                                                                                         self.transform)
+        # print(f"transformed_image shape: {transformed_image.shape}")
 
-        input_thermal_transform = get_transform(self.opt, transform_params, grayscale=(self.input_nc == 1))
-        mask_transform = get_transform(self.opt, transform_params)
-
-        rgb_channels = input_thermal_transform(rgb_channels)
-        thermal_channel = input_thermal_transform(thermal_channel)
-
-        return {'rgb_channels': rgb_channels,
-                'thermal_channel': thermal_channel,
-                'mask_dict': get_mask_dictionary(current_npz_frames['A'][:, :, 3], mask_transform)}
+        return {'rgb_channels': transformed_image,
+                'thermal_channel': transformed_thermal,
+                'mask_dict': mask_dict}
 
     def __len__(self):
         """Return the total number of images in the dataset."""

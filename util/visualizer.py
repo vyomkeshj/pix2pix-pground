@@ -81,6 +81,9 @@ class Visualizer():
             mul = 1.0
             if "mask" in label:
                 mul = 100.0
+            if "generated" in label:
+                # image = image/255.
+                image = image[:, 0, :, :]
             image_numpy = util.tensor2im(image*mul)
             wandb_image = wandb.Image(image_numpy)
             table_row.append(wandb_image)

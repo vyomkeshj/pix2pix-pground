@@ -6,59 +6,24 @@ from PIL import Image
 import os
 
 
-# def tensor2im(input_image, imtype=np.uint8):
-#     """"Converts a Tensor array into a numpy image array.
-#
-#     Parameters:
-#         input_image (tensor) --  the input image tensor array
-#         imtype (type)        --  the desired type of the converted numpy array
-#     """
-#     if not isinstance(input_image, np.ndarray):
-#         if isinstance(input_image, torch.Tensor):  # get the data from a variable
-#             image_tensor = input_image.data
-#         else:
-#             return [input_image]
-#         image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
-#         if image_numpy.shape[0] == 1:  # grayscale to RGB
-#             image_numpy = np.tile(image_numpy, (3, 1, 1))
-#         # Our custom 4 channel case
-#         if image_numpy.shape[0] == 3:
-#             # First is rgb image
-#             rgb = image_numpy[0:3, :, :]
-#             rgb = (np.transpose(rgb, (1, 2, 0)) + 1) / 2.0 * 255.0
-#             # Then is segmentation
-#             seg = image_numpy[3:4, :, :]
-#             seg = np.tile(seg, (3, 1, 1))
-#             seg = (np.transpose(seg, (1, 2, 0)) + 1) / 2.0 * 255.0
-#             return [rgb.astype(imtype), seg.astype(imtype)]
-#         image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0  # post-processing: tranpose and scaling
-#     else:  # if it is a numpy array, do nothing
-#         image_numpy = input_image
-#     return [image_numpy.astype(imtype)]
-
 def tensor2im(input_image, imtype=np.uint8, is_train=True):
+    print(f"input tensor image shape : {input_image.shape}")
+
     """"Converts a Tensor array into a numpy image array.
     Parameters:
         input_image (tensor) --  the input image tensor array
         imtype (type)        --  the desired type of the converted numpy array
     """
-    if not isinstance(input_image, np.ndarray):
-        if isinstance(input_image, torch.Tensor):  # get the data from a variable
-            image_tensor = input_image.data
-        else:
-            return input_image
-        image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
-        print("input image into tensor2im= "+str(image_numpy.shape))
 
-        if image_numpy.shape[0] == 1:  # grayscale to RGB
-            image_numpy = np.tile(image_numpy, (3, 1, 1))
-        if not is_train:
-            image_numpy = (image_numpy + 1) / 2.0 * 255.0  # post-processing: tranpose and scaling
-        else:
-            image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0  # post-processing: tranpose and scaling
-    else:  # if it is a numpy array, do nothing
-        image_numpy = input_image
-    return image_numpy.astype(imtype)
+    if not isinstance(input_image, np.ndarray):
+        input_image = input_image.detach()
+
+    image_numpy = input_image[0].cpu().float().numpy()  # convert it into a numpy array
+    #
+    if image_numpy.shape[0] == 3:  # [16, 512, 512, 3]
+        image_numpy = np.transpose(image_numpy, (1, 2, 0))
+
+    return (image_numpy*255).astype(imtype)
 
 def tensor2im_test(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
