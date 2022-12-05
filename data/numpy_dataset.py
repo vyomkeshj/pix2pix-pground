@@ -5,6 +5,10 @@ from data.numpy_loader import load_frames
 from PIL import Image
 import albumentations as alb
 
+def rgb2gray(rgb):
+    r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+    return gray
 
 def create_mask(mask_matrix, id2label_ids):
     """ Takes a mask matrix and a label id, returns a boolean mask with just the areas with the label id """
@@ -35,11 +39,13 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask = railroad_mask,
                             sky_mask = sky_mask )
 
-    return transformed['image']/255., transformed['thermal_image']/255., {
+    return transformed['image']/255., rgb2gray(transformed['thermal_image'])/255., \
+            {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],
             'railroad_mask': transformed['railroad_mask'][..., np.newaxis],
-            'sky_mask': transformed['sky_mask'][..., np.newaxis]}
+            'sky_mask': transformed['sky_mask'][..., np.newaxis]
+            }
 
 
 class NumpyDataset(BaseDataset):
@@ -82,8 +88,9 @@ class NumpyDataset(BaseDataset):
             alb.Rotate (limit=90, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.8),
             alb.RandomCrop(width=512, height=512),
             alb.HorizontalFlip(p=0.5),
-            alb.RandomBrightnessContrast(p=0.2),
-            alb.RGBShift (r_shift_limit=20, g_shift_limit=20, b_shift_limit=20, always_apply=False, p=0.5)
+            alb.VerticalFlip(p=0.5),
+            alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
+            alb.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',
@@ -95,6 +102,7 @@ class NumpyDataset(BaseDataset):
                                                                                          mask_channel,
                                                                                          thermal_channel,
                                                                                          transform)
+
         # print(f"transformed_image shape: {transformed_image.shape}")
 
         return {'rgb_channels': transformed_image,

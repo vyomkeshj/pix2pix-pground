@@ -2,7 +2,7 @@ import torch
 from .base_model import BaseModel
 from . import networks
 from collections import OrderedDict
-
+import numpy as np
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
@@ -80,7 +80,8 @@ class Pix2PixModel(BaseModel):
         The option 'direction' can be used to swap images in domain A and domain B.
         """
         self.rgb_channels = input['rgb_channels'].to(self.device)
-        self.thermal_channel = torch.permute(input['thermal_channel'], (0, 3, 1, 2)).float().to(self.device)
+        # print(f"shape of thermal channel: {input['thermal_channel'].shape}")
+        self.thermal_channel = torch.permute(input['thermal_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(self.device)
         self.mask_dict = input['mask_dict']
 
         self.stacked_A = self.rgb_channels
