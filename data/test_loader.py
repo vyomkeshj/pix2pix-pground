@@ -36,7 +36,7 @@ class TestDataset:
                                                                                          mask_channel,
                                                                                          thermal_channel,
                                                                                          self.transform)
-        
+
         mask_dict = dict(map(lambda item: (item[0], torch.tensor(item[1][np.newaxis, ...])), mask_dict.items()))
         return {'rgb_channels': torch.tensor(transformed_image[np.newaxis, ...]),
                 'thermal_channel': torch.tensor(transformed_thermal[np.newaxis, ...]),
