@@ -70,6 +70,12 @@ class BaseModel(ABC):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         pass
 
+    def optimize_discriminator(self):
+        pass
+
+    def optimize_generator(self):
+        pass
+    
     @abstractmethod
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from data.base_dataset import BaseDataset, get_params, get_transform
+from data.base_dataset import BaseDataset
 from data.numpy_loader import load_frames
 from PIL import Image
 import albumentations as alb
@@ -39,7 +39,8 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask = railroad_mask,
                             sky_mask = sky_mask )
 
-    return transformed['image']/255., rgb2gray(transformed['thermal_image'])/255., \
+
+    return (transformed['image']-128.)/128., (rgb2gray(transformed['thermal_image'])-128.)/128., \
             {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],
@@ -83,12 +84,12 @@ class NumpyDataset(BaseDataset):
         rgb_channels = current_npz_frames['A'][:, :, 0:3]
         mask_channel = current_npz_frames['A'][:, :, 3]
         thermal_channel = current_npz_frames['B'][:, :, 0]
-        
+
         transform = alb.Compose([
-            alb.Rotate (limit=90, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.8),
+            # alb.Rotate (limit=90, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.8),
             alb.RandomCrop(width=512, height=512),
             alb.HorizontalFlip(p=0.5),
-            alb.VerticalFlip(p=0.5),
+            # alb.VerticalFlip(p=0.5),
             alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
             alb.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
         ], additional_targets={

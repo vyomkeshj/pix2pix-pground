@@ -4,18 +4,20 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
 from data.test_loader import TestDataset
+from data.validation_loader import ValidationDataset
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
+
+
+    # test_dataset = ValidationDataset('./validation_npz')
     test_dataset = TestDataset('../robotrain_pytorch/datasets/FLIR_np/test')
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
-
-    test_every_steps = 100
-    # how many validation images to run against every test
-    test_every_sample_size = 50
-
+    test_size = len(test_dataset)
     dataset_size = len(dataset)    # get the number of images in the dataset.
-    # print('The number of training images = %d' % dataset_size)
+
+    test_every_steps = opt.batch_size * 4 # test every n epochs and publish validation results
+    viz_sample_every_steps = opt.batch_size * 2 # test every n epochs and publish validation results
 
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
@@ -28,6 +30,7 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
         model.update_learning_rate()    # update learning rates in the beginning of every epoch.
+
         for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % opt.print_freq == 0:
@@ -37,23 +40,25 @@ if __name__ == '__main__':
             epoch_iter += opt.batch_size
 
             model.set_input(data)         # unpack data from dataset and apply preprocessing
-            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
+            # model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
-            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+            model.forward()
+            model.optimize_discriminator()
+            model.optimize_generator()
+
+            if total_iters % opt.display_freq == 0:   # display to wandb
                 model.compute_visuals()
                 visualizer.display_current_results(model.get_current_visuals(), epoch)
 
             if total_iters % test_every_steps == 0:
                 for t_i, test_data in enumerate(test_dataset):
-                    if t_i>=test_every_sample_size:
+                    if t_i>=test_size:
                         break
                     model.set_input(test_data)  # unpack data from data loader
                     model.test()           # run inference
 
                     visuals = model.get_current_visuals()  # get image results
                     visualizer.display_current_results(visuals, epoch, is_val=True)
-
-
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()

@@ -51,13 +51,6 @@ class Visualizer():
         self.wandb_run._label(repo='CycleGAN-and-pix2pix')
         self.current_epoch = 0
 
-        #
-        # # create a logging file to store training losses
-        # self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
-        # with open(self.log_name, "a") as log_file:
-        #     now = time.strftime("%c")
-        #     log_file.write('================ Training Loss (%s) ================\n' % now)
-
     def reset(self):
         """Reset the self.saved status"""
         self.saved = False
@@ -71,31 +64,24 @@ class Visualizer():
             save_result (bool) - - if save the current results to an HTML file
         """
 
-        # # if self.use_wandb:
-        # columns = [key for key, _ in visuals.items()]
-        # columns.insert(0, 'epoch')
-        # result_table = wandb.Table(columns=columns)
-        # table_row = [epoch]
+
         ims_dict = {"epoch": epoch}
         for label, image in visuals.items():
             label = label + f"_val" if is_val else label
-            mul = 1.0
+            # image_numpy = util.tensor2im(image)
+
             if "mask" in label:
-                mul = 100.0
+                image_numpy = util.tensor2im(image * 100.0)
+
             if "generated" in label:
-                # image = image/255.
-                image = image[:, 0, :, :]
-            image_numpy = util.tensor2im(image*mul)
+                image = (image[:, 0, :, :]* 128.) + 128.
+                image_numpy = util.tensor2im(image)
+
             wandb_image = wandb.Image(image_numpy)
-            # table_row.append(wandb_image)
             ims_dict[label] = wandb_image
 
         self.wandb_run.log(ims_dict)
-        #
-        # if epoch != self.current_epoch:
-        #     self.current_epoch = epoch
-        #     result_table.add_data(*table_row)
-        #     self.wandb_run.log({"Result": result_table})
+
 
     def plot_current_losses(self, losses):
         """display the current losses on wandb display
