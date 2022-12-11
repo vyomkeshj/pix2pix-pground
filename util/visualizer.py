@@ -61,22 +61,19 @@ class Visualizer():
         Parameters:
             visuals (OrderedDict) - - dictionary of images to display or save
             epoch (int) - - the current epoch
-            save_result (bool) - - if save the current results to an HTML file
+            is_val (bool) - - if validation, append it to the label
         """
-
 
         ims_dict = {"epoch": epoch}
         for label, image in visuals.items():
             label = label + f"_val" if is_val else label
-            # image_numpy = util.tensor2im(image)
-
+            mul = 1.0
             if "mask" in label:
-                image_numpy = util.tensor2im(image * 100.0)
-
+                mul = 100.0
             if "generated" in label:
-                image = (image[:, 0, :, :]* 128.) + 128.
-                image_numpy = util.tensor2im(image)
-
+                # image = image/255.
+                image = image[:, 0, :, :]
+            image_numpy = util.tensor2im(image*mul)
             wandb_image = wandb.Image(image_numpy)
             ims_dict[label] = wandb_image
 

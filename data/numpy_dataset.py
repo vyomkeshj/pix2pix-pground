@@ -39,8 +39,7 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask = railroad_mask,
                             sky_mask = sky_mask )
 
-
-    return (transformed['image']-128.)/128., (rgb2gray(transformed['thermal_image'])-128.)/128., \
+    return transformed['image']/255., rgb2gray(transformed['thermal_image'])/255., \
             {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],
@@ -91,7 +90,7 @@ class NumpyDataset(BaseDataset):
             alb.HorizontalFlip(p=0.5),
             # alb.VerticalFlip(p=0.5),
             alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
-            alb.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
+            alb.CLAHE (clip_limit=2.0, tile_grid_size=(8, 8), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',

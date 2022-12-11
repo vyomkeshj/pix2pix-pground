@@ -1,11 +1,13 @@
-import os
-import numpy as np
-from data.base_dataset import BaseDataset #, get_params, get_transform
-from data.numpy_loader import load_frames
-from PIL import Image
 import albumentations as alb
+import numpy as np
+import os
 import torch
+from PIL import Image
+
+from data.base_dataset import BaseDataset  # , get_params, get_transform
 from data.numpy_dataset import create_mask, rgb2gray
+from data.numpy_loader import load_frames
+
 
 def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
     rgb_channels = input_image[:, :, 0:3]
@@ -18,33 +20,36 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
     thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
     # print(f"stacked thermal shape: {thermal_stack.shape}")
 
-    transformed = transform(image = rgb_channels,
-                            thermal_image = thermal_stack,
-                            trees_mask = trees_mask,
-                            person_mask = person_mask,
-                            railroad_mask = railroad_mask,
-                            sky_mask = sky_mask )
+    transformed = transform(image=rgb_channels,
+                            thermal_image=thermal_stack,
+                            trees_mask=trees_mask,
+                            person_mask=person_mask,
+                            railroad_mask=railroad_mask,
+                            sky_mask=sky_mask)
 
-    return transformed['image']/255., rgb2gray(transformed['thermal_image'])/255., \
-{
-'person_mask': transformed['person_mask'][..., np.newaxis],
-'trees_mask': transformed['trees_mask'][..., np.newaxis],
-'railroad_mask': transformed['railroad_mask'][..., np.newaxis],
-'sky_mask': transformed['sky_mask'][..., np.newaxis]
-}
+    return (transformed['image'] - 128.) / 128., rgb2gray((transformed['thermal_image'] - 128.) / 128., \
+                                                          {
+                                                              'person_mask': transformed['person_mask'][
+                                                                  ..., np.newaxis],
+                                                              'trees_mask': transformed['trees_mask'][..., np.newaxis],
+                                                              'railroad_mask': transformed['railroad_mask'][
+                                                                  ..., np.newaxis],
+                                                              'sky_mask': transformed['sky_mask'][..., np.newaxis]
+                                                          }
+
 
 class ValidationDataset:
 
     def __init__(self, path):
-        self.data_path = path # os.path.join(opt.dataroot, opt.phase)  # get the image directory
+        self.data_path = path  # os.path.join(opt.dataroot, opt.phase)  # get the image directory
         self.input_files = sorted(load_frames(self.data_path, float("inf")))  # get image paths
 
-        self.input_nc = 7 # self.opt.input_nc
-        self.output_nc = 3 # self.opt.output_nc
+        self.input_nc = 7  # self.opt.input_nc
+        self.output_nc = 3  # self.opt.output_nc
         self.transform = alb.Compose([
             alb.RandomCrop(width=512, height=512),
             # alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
-            alb.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
+            alb.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',

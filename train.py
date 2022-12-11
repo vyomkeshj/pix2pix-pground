@@ -4,11 +4,10 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
 from data.test_loader import TestDataset
-from data.validation_loader import ValidationDataset
+# from data.validation_loader import ValidationDataset
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
-
 
     # test_dataset = ValidationDataset('./validation_npz')
     test_dataset = TestDataset('../robotrain_pytorch/datasets/FLIR_np/test')
@@ -16,8 +15,10 @@ if __name__ == '__main__':
     test_size = len(test_dataset)
     dataset_size = len(dataset)    # get the number of images in the dataset.
 
-    test_every_steps = opt.batch_size * 4 # test every n epochs and publish validation results
-    viz_sample_every_steps = opt.batch_size * 2 # test every n epochs and publish validation results
+    train_gen_every = 2 # train generator every even epoch only
+
+    test_every_steps = opt.batch_size # test every epoch and publish validation results
+    # viz_sample_every_steps = opt.batch_size * 2 # test every n epochs and publish validation results
 
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
@@ -44,13 +45,16 @@ if __name__ == '__main__':
 
             model.forward()
             model.optimize_discriminator()
-            model.optimize_generator()
 
-            if total_iters % opt.display_freq == 0:   # display to wandb
+            if i % train_gen_every == 0:
+                model.forward()
+                model.optimize_generator()
+
+            if total_iters % test_every_steps == 0:
+                # upload training gen sample
                 model.compute_visuals()
                 visualizer.display_current_results(model.get_current_visuals(), epoch)
 
-            if total_iters % test_every_steps == 0:
                 for t_i, test_data in enumerate(test_dataset):
                     if t_i>=test_size:
                         break

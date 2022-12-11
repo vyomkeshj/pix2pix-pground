@@ -107,6 +107,8 @@ class Pix2PixModel(BaseModel):
                             1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         # fake_AB = torch.cat((self.real_A, self.M_stack, self.generated_thermal), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         pred_fake = self.netD(fake_AB.detach())
+        # print(f"shape of dis patch: {pred_fake.shape}")
+
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
         # Real
         real_AB = torch.cat((self.stacked_A, self.thermal_channel), 1)
