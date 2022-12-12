@@ -77,7 +77,7 @@ class Pix2PixModel(BaseModel):
             input['seg_channel'] = torch.tensor(input['seg_channel'][np.newaxis, ...])
             input['thermal_channel'] = torch.tensor(input['thermal_channel'][np.newaxis, ...])
 
-        self.seg_channel = torch.permute(input['seg_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(self.device)
+        self.seg_channel = torch.permute(input['seg_channel'], (0, 3, 1, 2)).float().to(self.device)
         self.thermal_channel = torch.permute(input['thermal_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(self.device)
 
         # print(f"shape of thermal tensor after: {self.thermal_channel.shape}")

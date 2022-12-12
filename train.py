@@ -15,7 +15,7 @@ if __name__ == '__main__':
     test_size = len(test_dataset)
     dataset_size = len(dataset)    # get the number of images in the dataset.
 
-    train_gen_every = 2 # train generator every even epoch only
+    train_dis_every = 2 # train discriminator every even epoch only
 
     test_every_steps = opt.batch_size*20 # test every epoch and publish validation results
     # viz_sample_every_steps = opt.batch_size * 2 # test every n epochs and publish validation results
@@ -44,11 +44,11 @@ if __name__ == '__main__':
             # model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             model.forward()
-            model.optimize_discriminator()
+            model.optimize_generator()
 
-            if i % train_gen_every == 0:
+            if i % train_dis_every == 0:
                 model.forward()
-                model.optimize_generator()
+                model.optimize_discriminator()
 
             if total_iters % test_every_steps == 0:
                 # upload training gen sample
@@ -64,12 +64,12 @@ if __name__ == '__main__':
                     visuals = model.get_current_visuals()  # get image results
                     visualizer.display_current_results(visuals, epoch, is_val=True)
 
-            if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
-                losses = model.get_current_losses()
-                t_comp = (time.time() - iter_start_time) / opt.batch_size
-
-                visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
-                visualizer.plot_current_losses(losses)
+            # if total_iters % opt.save_latest_freq == 0:    # print training losses and save logging information to the disk
+            #     losses = model.get_current_losses()
+            #     t_comp = (time.time() - iter_start_time) / opt.batch_size
+            #
+            #     visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
+            #     visualizer.plot_current_losses(losses)
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))

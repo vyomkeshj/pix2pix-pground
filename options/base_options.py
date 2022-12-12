@@ -38,7 +38,7 @@ class BaseOptions():
         # model parameters
         parser.add_argument('--model', type=str, default='pix2pix', help='chooses which model to use. [pix2pix]')
         parser.add_argument('--norm', type=str, default='instance', help='instance normalization or batch normalization [instance | batch | none]')
-        parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal | xavier | kaiming | orthogonal]')
+        parser.add_argument('--init_type', type=str, default='xavier', help='network initialization [normal | xavier | kaiming | orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
         # dataset parameters

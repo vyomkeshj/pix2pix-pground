@@ -18,7 +18,8 @@ def tensor2im(input_image, imtype=np.uint8, is_train=True):
     if not isinstance(input_image, np.ndarray):
         input_image = input_image.detach()
 
-    image_numpy = input_image[0].cpu().float().numpy()  # convert it into a numpy array
+    # image_numpy = input_image[0].cpu().float().numpy()  # convert it into a numpy array
+    image_numpy = input_image.cpu().float().numpy()  # convert it into a numpy array
     #
     if image_numpy.shape[0] == 3:  # [16, 512, 512, 3]
         image_numpy = np.transpose(image_numpy, (1, 2, 0))

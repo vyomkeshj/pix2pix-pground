@@ -124,7 +124,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         input_nc (int) -- the number of channels in input images
         output_nc (int) -- the number of channels in output images
         ngf (int) -- the number of filters in the last conv layer
-        netG (str) -- the architecture's name: resnet_9blocks | resnet_6blocks | unet_256 | unet_128
+        netG (str) -- the architecture's name: resnet_9blocks | resnet_6blocks | unet_256 | unet_
         norm (str) -- the name of normalization layers used in the network: batch | instance | none
         use_dropout (bool) -- if use dropout layers.
         init_type (str)    -- the name of our initialization method.
@@ -152,7 +152,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
     elif netG == 'unet_128':
-        net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+        net = UnetGenerator(input_nc, output_nc, 9, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
@@ -364,7 +364,7 @@ class UnetSkipConnectionBlock(nn.Module):
             down = [downrelu, downconv, downnorm]
             up = [uprelu, upconv, upnorm]
 
-            if True:
+            if use_dropout:
                 model = down + [submodule] + up + [nn.Dropout(0.5)]
             else:
                 model = down + [submodule] + up
@@ -398,7 +398,6 @@ class NLayerDiscriminator(nn.Module):
 
         kw = 4
         padw = 1
-        # stride used to be 2
         sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]
         nf_mult = 1
         nf_mult_prev = 1
@@ -414,7 +413,7 @@ class NLayerDiscriminator(nn.Module):
         nf_mult_prev = nf_mult
         nf_mult = min(2 ** n_layers, 8)
         sequence += [
-            nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
+            nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]

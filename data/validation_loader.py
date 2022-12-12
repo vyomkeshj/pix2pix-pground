@@ -30,7 +30,7 @@ class ValidationDataset:
 
         transform = alb.Compose([
             alb.RandomCrop(width=512, height=512),
-            alb.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), always_apply=True),
+            # alb.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',
@@ -41,7 +41,10 @@ class ValidationDataset:
 
         # print(f"transformed_image shape: {transformed_image.shape}")
 
-        return {'seg_channel': rgb2gray(transformed['image'])/255.,
+        #return {'seg_channel': rgb2gray(transformed['image'])/255.,
+         #       'thermal_channel': transformed['thermal_image']/255.}
+                
+        return {'seg_channel': transformed['image']/255.,
                 'thermal_channel': transformed['thermal_image']/255.}
 
 

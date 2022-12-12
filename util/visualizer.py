@@ -67,7 +67,9 @@ class Visualizer():
         ims_dict = {"epoch": epoch}
         for label, image in visuals.items():
             label = label + f"_val" if is_val else label
-            image = image[:, 0, :, :]
+            # print(f"image shape {image.shape}")
+            image = image[0, :, :, :]
+
             image_numpy = util.tensor2im(image)
             wandb_image = wandb.Image(image_numpy)
             ims_dict[label] = wandb_image
