@@ -5,15 +5,6 @@ from collections import OrderedDict
 import numpy as np
 
 class Pix2PixModel(BaseModel):
-    """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
-
-    The model training requires '--dataset_mode aligned' dataset.
-    By default, it uses a '--netG unet256' U-Net generator,
-    a '--netD basic' discriminator (PatchGAN),
-    and a '--gan_mode' vanilla GAN loss (the cross-entropy objective used in the orignal GAN paper).
-
-    pix2pix paper: https://arxiv.org/pdf/1611.07004.pdf
-    """
 
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
@@ -47,7 +38,7 @@ class Pix2PixModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'trees_mask', 'sky_mask', 'railroad_mask']
+        self.visual_names = ['seg_channel', 'thermal_channel', 'generated_thermal']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G', 'D']
@@ -79,39 +70,33 @@ class Pix2PixModel(BaseModel):
 
         The option 'direction' can be used to swap images in domain A and domain B.
         """
-        self.rgb_channels = input['rgb_channels'].to(self.device)
-        # print(f"shape of thermal channel: {input['thermal_channel'].shape}")
+        # print(f"shape of seg tensor: {input['seg_channel'].shape}")
+        # print(f"shape of thermal tensor: {input['thermal_channel'].shape}")
+
+        if not torch.is_tensor(input['seg_channel']):
+            input['seg_channel'] = torch.tensor(input['seg_channel'][np.newaxis, ...])
+            input['thermal_channel'] = torch.tensor(input['thermal_channel'][np.newaxis, ...])
+
+        self.seg_channel = torch.permute(input['seg_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(self.device)
         self.thermal_channel = torch.permute(input['thermal_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(self.device)
-        self.mask_dict = input['mask_dict']
 
-        self.stacked_A = self.rgb_channels
-        self.person_mask = self.mask_dict['person_mask']
-        self.trees_mask = self.mask_dict['trees_mask']
-        self.sky_mask = self.mask_dict['sky_mask']
-        self.railroad_mask = self.mask_dict['railroad_mask']
-
-        # created a stacked frame with rgb + masks
-        for key, value in self.mask_dict.items():
-            self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=3)
-        self.stacked_A = torch.permute(self.stacked_A, (0, 3, 1, 2)).float()
-
+        # print(f"shape of thermal tensor after: {self.thermal_channel.shape}")
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.generated_thermal = self.netG(self.stacked_A)  # G(A)
+        self.generated_thermal = self.netG(self.seg_channel)  # G(A)
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
         # Fake; stop backprop to the generator by detaching generated_thermal
-        fake_AB = torch.cat((self.stacked_A, self.generated_thermal),
+        fake_AB = torch.cat((self.seg_channel, self.generated_thermal),
                             1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         # fake_AB = torch.cat((self.real_A, self.M_stack, self.generated_thermal), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         pred_fake = self.netD(fake_AB.detach())
-        print(f"shape of dis patch: {pred_fake.shape}")
 
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
         # Real
-        real_AB = torch.cat((self.stacked_A, self.thermal_channel), 1)
+        real_AB = torch.cat((self.seg_channel, self.thermal_channel), 1)
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
         # combine loss and calculate gradients
@@ -121,7 +106,7 @@ class Pix2PixModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         # First, G(A) should fake the discriminator
-        fake_AB = torch.cat((self.stacked_A, self.generated_thermal), 1)
+        fake_AB = torch.cat((self.seg_channel, self.generated_thermal), 1)
         # fake_AB = torch.cat((self.real_A, self.M_stack, self.generated_thermal), 1)
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)

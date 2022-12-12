@@ -5,38 +5,13 @@ import torch
 from PIL import Image
 
 from data.base_dataset import BaseDataset  # , get_params, get_transform
-from data.numpy_dataset import create_mask, rgb2gray
+# from data.numpy_dataset import create_mask, rgb2gray
 from data.numpy_loader import load_frames
 
-
-def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
-    rgb_channels = input_image[:, :, 0:3]
-
-    trees_mask = create_mask(segementation_channel, [97])
-    person_mask = create_mask(segementation_channel, [102])
-    railroad_mask = create_mask(segementation_channel, [104, 106])
-    sky_mask = create_mask(segementation_channel, [0])
-
-    thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
-    # print(f"stacked thermal shape: {thermal_stack.shape}")
-
-    transformed = transform(image=rgb_channels,
-                            thermal_image=thermal_stack,
-                            trees_mask=trees_mask,
-                            person_mask=person_mask,
-                            railroad_mask=railroad_mask,
-                            sky_mask=sky_mask)
-
-    return (transformed['image'] - 128.) / 128., rgb2gray((transformed['thermal_image'] - 128.) / 128., \
-                                                          {
-                                                              'person_mask': transformed['person_mask'][
-                                                                  ..., np.newaxis],
-                                                              'trees_mask': transformed['trees_mask'][..., np.newaxis],
-                                                              'railroad_mask': transformed['railroad_mask'][
-                                                                  ..., np.newaxis],
-                                                              'sky_mask': transformed['sky_mask'][..., np.newaxis]
-                                                          }
-
+def rgb2gray(rgb):
+    r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+    return gray
 
 class ValidationDataset:
 
@@ -44,36 +19,31 @@ class ValidationDataset:
         self.data_path = path  # os.path.join(opt.dataroot, opt.phase)  # get the image directory
         self.input_files = sorted(load_frames(self.data_path, float("inf")))  # get image paths
 
-        self.input_nc = 7  # self.opt.input_nc
-        self.output_nc = 3  # self.opt.output_nc
-        self.transform = alb.Compose([
-            alb.RandomCrop(width=512, height=512),
-            # alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
-            alb.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
-        ], additional_targets={
-            'image': 'image',
-            'thermal_image': 'image',
-            'person_mask': 'mask',
-            'trees_mask': 'mask',
-            'railroad_mask': 'mask',
-            'sky_mask': 'mask'})
+        self.input_nc = 1  # self.opt.input_nc
+        self.output_nc = 1  # self.opt.output_nc
+
 
     def __getitem__(self, index):
         current_npz_frames = np.load(self.input_files[index])
-
-        rgb_channels = current_npz_frames['A'][:, :, 0:3]
-        mask_channel = current_npz_frames['A'][:, :, 3]
+        image_channel = current_npz_frames['A'][:, :, 0:3]
         thermal_channel = current_npz_frames['B'][:, :, 0]
 
-        transformed_image, transformed_thermal, mask_dict = get_transformed_images_masks(rgb_channels,
-                                                                                         mask_channel,
-                                                                                         thermal_channel,
-                                                                                         self.transform)
+        transform = alb.Compose([
+            alb.RandomCrop(width=512, height=512),
+            alb.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), always_apply=True),
+        ], additional_targets={
+            'image': 'image',
+            'thermal_image': 'image',
+        })
 
-        mask_dict = dict(map(lambda item: (item[0], torch.tensor(item[1][np.newaxis, ...])), mask_dict.items()))
-        return {'rgb_channels': torch.tensor(transformed_image[np.newaxis, ...]),
-                'thermal_channel': torch.tensor(transformed_thermal[np.newaxis, ...]),
-                'mask_dict': mask_dict}
+        transformed = transform(image=image_channel,
+                                thermal_image=thermal_channel)
+
+        # print(f"transformed_image shape: {transformed_image.shape}")
+
+        return {'seg_channel': rgb2gray(transformed['image'])/255.,
+                'thermal_channel': transformed['thermal_image']/255.}
+
 
     def __len__(self):
         """Return the total number of images in the dataset."""

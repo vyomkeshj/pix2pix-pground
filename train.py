@@ -3,21 +3,21 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-from data.test_loader import TestDataset
-# from data.validation_loader import ValidationDataset
+# from data.test_loader import TestDataset
+from data.validation_loader import ValidationDataset
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
 
-    # test_dataset = ValidationDataset('./validation_npz')
-    test_dataset = TestDataset('../robotrain_pytorch/datasets/FLIR_np/test')
+    test_dataset = ValidationDataset('./validation_npz')
+    # test_dataset = TestDataset('../robotrain_pytorch/datasets/FLIR_np/test')
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     test_size = len(test_dataset)
     dataset_size = len(dataset)    # get the number of images in the dataset.
 
     train_gen_every = 2 # train generator every even epoch only
 
-    test_every_steps = opt.batch_size # test every epoch and publish validation results
+    test_every_steps = opt.batch_size*20 # test every epoch and publish validation results
     # viz_sample_every_steps = opt.batch_size * 2 # test every n epochs and publish validation results
 
     model = create_model(opt)      # create a model given opt.model and other options
