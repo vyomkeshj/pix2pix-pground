@@ -89,11 +89,9 @@ class Visualizer():
         if is_val:
             thermal = temp_dict['generated_thermal_val'][0]
             # clean extra bright pixels, replace them with mean (todo: improve)
-            thermal[thermal >= 230] = np.mean(thermal)
+            thermal[thermal >= 250] = np.mean(thermal)
             person_mask = temp_dict['person_mask_val'][:,:,0]
             np.putmask(thermal, (person_mask == 255), 245)
-
-
 
             ims_dict['highlighted_thermal_val'] = wandb.Image(thermal[np.newaxis, ...])
         self.wandb_run.log(ims_dict)
@@ -123,3 +121,22 @@ class Visualizer():
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
+
+
+def save_image(image_numpy, image_path, aspect_ratio=1.0):
+    """Save a numpy image to the disk
+
+    Parameters:
+        image_numpy (numpy array) -- input numpy array
+        image_path (str)          -- the path of the image
+    """
+
+    image_pil = Image.fromarray(image_numpy)
+    print("shape = " + str(image_numpy.shape))
+    h, w, _ = image_numpy.shape
+
+    if aspect_ratio > 1.0:
+        image_pil = image_pil.resize((h, int(w * aspect_ratio)), Image.BICUBIC)
+    if aspect_ratio < 1.0:
+        image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
+    image_pil.save(image_path)

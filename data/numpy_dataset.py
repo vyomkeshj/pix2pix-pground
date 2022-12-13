@@ -87,13 +87,12 @@ class NumpyDataset(BaseDataset):
         thermal_channel = current_npz_frames['B'][:, :, 0]
 
         transform = alb.Compose([
-            # alb.Rotate(limit=30, interpolation=1, border_mode=4, value=None, mask_value=None,
-            #            rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
+            alb.Rotate(limit=20, interpolation=1, border_mode=4, value=None, mask_value=None,
+                       rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
             alb.RandomCrop(width=512, height=512),
             alb.HorizontalFlip(p=0.5),
-            # alb.VerticalFlip(p=0.3),
             alb.RGBShift(r_shift_limit=60, g_shift_limit=60, b_shift_limit=60, always_apply=False, p=0.7),
-            alb.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
+            alb.CLAHE(clip_limit=2.0, tile_grid_size=(3, 3), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',

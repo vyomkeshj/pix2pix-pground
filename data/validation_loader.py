@@ -4,7 +4,7 @@ import os
 import torch
 from PIL import Image
 
-from data.base_dataset import BaseDataset  # , get_params, get_transform
+from data.base_dataset import BaseDataset
 from data.numpy_dataset import create_mask, rgb2gray
 from data.numpy_loader import load_frames
 
@@ -12,9 +12,9 @@ from data.numpy_loader import load_frames
 def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
     rgb_channels = input_image[:, :, 0:3]
 
-    trees_mask = create_mask(segementation_channel, [97])
+    trees_mask = create_mask(segementation_channel, [2])
     person_mask = create_mask(segementation_channel, [102])
-    railroad_mask = create_mask(segementation_channel, [104, 106])
+    railroad_mask = create_mask(segementation_channel, [4, 1])
     sky_mask = create_mask(segementation_channel, [0])
 
     thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
@@ -50,7 +50,7 @@ class ValidationDataset:
         thermal_channel = current_npz_frames['B'][:, :, 0]
         transform = alb.Compose([
             alb.RandomCrop(width=512, height=512),
-            alb.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
+            alb.CLAHE(clip_limit=2.0, tile_grid_size=(3, 3), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',
