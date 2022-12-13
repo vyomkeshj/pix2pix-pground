@@ -1,9 +1,10 @@
-import os
+import albumentations as alb
 import numpy as np
+import os
+from PIL import Image
+
 from data.base_dataset import BaseDataset
 from data.numpy_loader import load_frames
-from PIL import Image
-import albumentations as alb
 
 
 def rgb2gray(rgb):
@@ -87,7 +88,8 @@ class NumpyDataset(BaseDataset):
         thermal_channel = current_npz_frames['B'][:, :, 0]
 
         transform = alb.Compose([
-            alb.Rotate(limit=30, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
+            alb.Rotate(limit=30, interpolation=1, border_mode=4, value=None, mask_value=None,
+                       rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
             alb.RandomCrop(width=512, height=512),
             alb.HorizontalFlip(p=0.5),
             alb.VerticalFlip(p=0.3),

@@ -3,15 +3,12 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
-from data.test_loader import TestDataset
 from data.validation_loader import ValidationDataset
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
 
-
     test_dataset = ValidationDataset('./validation_npz')
-    # test_dataset = TestDataset('../robotrain_pytorch/datasets/FLIR_np/test')
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     test_size = len(test_dataset)
     dataset_size = len(dataset)    # get the number of images in the dataset.
