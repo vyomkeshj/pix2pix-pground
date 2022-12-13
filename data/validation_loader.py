@@ -41,7 +41,15 @@ class ValidationDataset:
 
         self.input_nc = 7 # self.opt.input_nc
         self.output_nc = 3 # self.opt.output_nc
-        self.transform = alb.Compose([
+
+
+    def __getitem__(self, index):
+        current_npz_frames = np.load(self.input_files[index])
+
+        rgb_channels = current_npz_frames['A'][:, :, 0:3]
+        mask_channel = current_npz_frames['A'][:, :, 3]
+        thermal_channel = current_npz_frames['B'][:, :, 0]
+        transform = alb.Compose([
             alb.RandomCrop(width=512, height=512),
             # alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
             alb.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
@@ -53,17 +61,10 @@ class ValidationDataset:
             'railroad_mask': 'mask',
             'sky_mask': 'mask'})
 
-    def __getitem__(self, index):
-        current_npz_frames = np.load(self.input_files[index])
-
-        rgb_channels = current_npz_frames['A'][:, :, 0:3]
-        mask_channel = current_npz_frames['A'][:, :, 3]
-        thermal_channel = current_npz_frames['B'][:, :, 0]
-
         transformed_image, transformed_thermal, mask_dict = get_transformed_images_masks(rgb_channels,
                                                                                          mask_channel,
                                                                                          thermal_channel,
-                                                                                         self.transform)
+                                                                                         transform)
 
         mask_dict = dict(map(lambda item: (item[0], torch.tensor(item[1][np.newaxis, ...])), mask_dict.items()))
         return {'rgb_channels': torch.tensor(transformed_image[np.newaxis, ...]),

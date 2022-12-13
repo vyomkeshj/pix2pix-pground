@@ -68,14 +68,14 @@ class Visualizer():
         ims_dict = {"epoch": epoch}
         for label, image in visuals.items():
             label = label + f"_val" if is_val else label
-            # image_numpy = util.tensor2im(image)
+            multiplier = 1.0
 
             if "mask" in label:
-                image_numpy = util.tensor2im(image * 100.0)
+                multiplier = 100.0
 
             if "generated" in label:
-                image = (image[:, 0, :, :]* 128.) + 128.
-                image_numpy = util.tensor2im(image)
+                image = (image[:, 0, :, :])
+            image_numpy = util.tensor2im(image*multiplier)
 
             wandb_image = wandb.Image(image_numpy)
             ims_dict[label] = wandb_image
