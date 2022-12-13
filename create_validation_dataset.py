@@ -12,7 +12,8 @@ if __name__ == '__main__':
 
     # specify the directory containing the image pairs
     input_directory = './select_validation'
-    output_directory = './validation_npz_sample'
+    # directory where the output .npz files will be saved, you will pass this as argument in `scripts/test_pix2pix.sh`
+    validation_dataroot = './validation_npz_sample'
 
     # input_directory = './select_trmix'
     # output_directory = '../robotrain_pytorch/datasets/FLIR_np/train'
@@ -38,5 +39,5 @@ if __name__ == '__main__':
                 empty_thermal = (rgb_image[:, :, 0])[..., np.newaxis]
                 empty_thermal_sh = np.zeros_like(stacked_array)[:, :, 0][..., np.newaxis]
 
-                np.savez_compressed(f'{output_directory}/{save_index}', A=stacked, B=empty_thermal)
+                np.savez_compressed(f'{validation_dataroot}/{save_index}', A=stacked, B=empty_thermal)
                 save_index += 1

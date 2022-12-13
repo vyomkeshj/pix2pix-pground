@@ -14,20 +14,6 @@ except ImportError:
     print('Warning: wandb package cannot be found. error.')
 
 
-def save_images(visuals, is_train=True):
-    """Save images to the wandb.
-
-    Parameters:
-        visuals (OrderedDict)    -- an ordered dictionary that stores (name, images (either tensor or numpy) ) pairs
-    """
-    ims_dict = {}
-    for label, im_data in visuals.items():
-        imgs = util.tensor2im(im_data, is_train)
-        for i, im in enumerate(imgs):
-            ims_dict[label] = wandb.Image(im)
-        wandb.log(ims_dict)
-
-
 class Visualizer():
     """This class includes several functions that can display/save images and print/save logging information.
 
