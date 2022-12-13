@@ -67,7 +67,6 @@ class NumpyDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.data_path = os.path.join(opt.dataroot, opt.phase)  # get the image directory
         self.input_files = sorted(load_frames(self.data_path, opt.max_dataset_size))  # get image paths
-        assert (self.opt.load_size >= self.opt.crop_size)  # crop_size should be smaller than the size of loaded image
 
         self.input_nc = self.opt.input_nc
         self.output_nc = self.opt.output_nc
@@ -88,13 +87,13 @@ class NumpyDataset(BaseDataset):
         thermal_channel = current_npz_frames['B'][:, :, 0]
 
         transform = alb.Compose([
-            alb.Rotate(limit=30, interpolation=1, border_mode=4, value=None, mask_value=None,
-                       rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
+            # alb.Rotate(limit=30, interpolation=1, border_mode=4, value=None, mask_value=None,
+            #            rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
             alb.RandomCrop(width=512, height=512),
             alb.HorizontalFlip(p=0.5),
-            alb.VerticalFlip(p=0.3),
+            # alb.VerticalFlip(p=0.3),
             alb.RGBShift(r_shift_limit=60, g_shift_limit=60, b_shift_limit=60, always_apply=False, p=0.7),
-            alb.CLAHE(clip_limit=2.0, tile_grid_size=(4, 4), always_apply=True),
+            alb.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',

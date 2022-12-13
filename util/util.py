@@ -6,9 +6,7 @@ from PIL import Image
 import os
 
 
-def tensor2im(input_image, imtype=np.uint8, is_train=True):
-    # print(f"input tensor image shape : {input_image.shape}")
-
+def tensor2im(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
     Parameters:
         input_image (tensor) --  the input image tensor array
@@ -19,11 +17,11 @@ def tensor2im(input_image, imtype=np.uint8, is_train=True):
         input_image = input_image.detach()
 
     image_numpy = input_image[0].cpu().float().numpy()  # convert it into a numpy array
-    #
-    if image_numpy.shape[0] == 3:  # [16, 512, 512, 3]
+    if image_numpy.shape[0] == 3:
         image_numpy = np.transpose(image_numpy, (1, 2, 0))
 
-    return (image_numpy*255).astype(imtype)
+    return (image_numpy*255.).astype(imtype)
+
 
 def tensor2im_test(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.

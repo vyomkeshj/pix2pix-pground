@@ -65,22 +65,37 @@ class Visualizer():
         """
 
         ims_dict = {"epoch": epoch}
+        temp_dict = {}
         for label, image in visuals.items():
             label = label + f"_val" if is_val else label
-            multiplier = 1.0
-
+            multiplier = 1
             if "mask" in label:
-                multiplier = 100.0
+                multiplier = 100
+
+            if "person_mask_val" in label:
+                temp_dict['person_mask_val'] = util.tensor2im(image)
+
+            if "generated_thermal_val" in label:
+                temp_dict['generated_thermal_val'] = util.tensor2im(image)
 
             if "generated" in label:
-                image = (image[:, 0, :, :])
+                image = image[:, 0, :, :]
 
             image_numpy = util.tensor2im(image * multiplier)
-            image_numpy[image_numpy >= 225] = np.mean(image_numpy)
 
             wandb_image = wandb.Image(image_numpy)
             ims_dict[label] = wandb_image
 
+        if is_val:
+            thermal = temp_dict['generated_thermal_val'][0]
+            # clean extra bright pixels, replace them with mean (todo: improve)
+            thermal[thermal >= 230] = np.mean(thermal)
+            person_mask = temp_dict['person_mask_val'][:,:,0]
+            np.putmask(thermal, (person_mask == 255), 245)
+
+
+
+            ims_dict['highlighted_thermal_val'] = wandb.Image(thermal[np.newaxis, ...])
         self.wandb_run.log(ims_dict)
 
     def plot_current_losses(self, losses):

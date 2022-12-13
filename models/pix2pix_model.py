@@ -4,6 +4,7 @@ from . import networks
 from collections import OrderedDict
 import numpy as np
 
+
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
 
@@ -47,7 +48,8 @@ class Pix2PixModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'trees_mask', 'sky_mask', 'railroad_mask']
+        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'trees_mask',
+                             'sky_mask', 'railroad_mask']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G', 'D']
@@ -81,7 +83,8 @@ class Pix2PixModel(BaseModel):
         """
         self.rgb_channels = input['rgb_channels'].to(self.device)
         # print(f"shape of thermal channel: {input['thermal_channel'].shape}")
-        self.thermal_channel = torch.permute(input['thermal_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(self.device)
+        self.thermal_channel = torch.permute(input['thermal_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(
+            self.device)
         self.mask_dict = input['mask_dict']
 
         self.stacked_A = self.rgb_channels
@@ -94,7 +97,6 @@ class Pix2PixModel(BaseModel):
         for key, value in self.mask_dict.items():
             self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=3)
         self.stacked_A = torch.permute(self.stacked_A, (0, 3, 1, 2)).float()
-
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -142,7 +144,6 @@ class Pix2PixModel(BaseModel):
         self.backward_G()  # calculate graidents for G
         self.optimizer_G.step()  # udpate G's weights
 
-
     def optimize_generator(self):
         # self.forward()  # compute fake images: G(A)
 
@@ -169,5 +170,5 @@ class Pix2PixModel(BaseModel):
             if isinstance(name, str):
                 visual_ret[name] = getattr(self, name)
 
-        #todo: keep a dict of visuals
+        # todo: keep a dict of visuals
         return visual_ret
