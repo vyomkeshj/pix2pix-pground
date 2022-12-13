@@ -4,7 +4,7 @@ import os
 from PIL import Image
 
 from data.base_dataset import BaseDataset
-from data.numpy_loader import load_frames
+from data.utils import load_frames
 
 
 def rgb2gray(rgb):
@@ -33,7 +33,6 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
     sky_mask = create_mask(segementation_channel, [138])
 
     thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
-    # print(f"stacked thermal shape: {thermal_stack.shape}")
 
     transformed = transform(image=rgb_channels,
                             thermal_image=thermal_stack,
@@ -42,7 +41,7 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask=railroad_mask,
                             sky_mask=sky_mask)
 
-    return transformed['image'] / 255., rgb2gray(transformed['thermal_image']) / 255., \
+    return transformed['image'] / 255., (transformed['thermal_image'][:, :, 0]) / 255., \
         {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],

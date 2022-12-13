@@ -1,2 +1,7 @@
-set -ex
-python test.py --dataroot ../robotrain_pytorch/datasets/FLIR_np --name test_model --model pix2pix --netG unet_128  --dataset_mode numpy --input_nc=7 --output_nc=1
+eval "$(conda shell.bash hook)"
+conda activate /scratch/project/open-20-15/envs/pix2pix_env
+
+cd /scratch/project/open-20-15/robotrain
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+
+python test.py --name test_threshold --model pix2pix --netG unet_512

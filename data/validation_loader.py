@@ -5,8 +5,8 @@ import torch
 from PIL import Image
 
 from data.base_dataset import BaseDataset
-from data.numpy_dataset import create_mask, rgb2gray
-from data.numpy_loader import load_frames
+from data.numpy_dataset import create_mask
+from data.utils import load_frames
 
 
 def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
@@ -27,7 +27,7 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask=railroad_mask,
                             sky_mask=sky_mask)
 
-    return transformed['image'] / 255., rgb2gray(transformed['thermal_image']) / 255., \
+    return transformed['image'] / 255., (transformed['thermal_image'][:, :, 0]) / 255., \
         {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],

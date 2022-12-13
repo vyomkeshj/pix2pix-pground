@@ -2,11 +2,11 @@
 
 It also includes common transformation functions (e.g., get_transform, __scale_width), which can be later used in subclasses.
 """
-import random
 import numpy as np
+import random
 import torch.utils.data as data
-from PIL import Image
 import torchvision.transforms as transforms
+from PIL import Image
 from abc import ABC, abstractmethod
 
 
@@ -58,4 +58,3 @@ class BaseDataset(data.Dataset, ABC):
             a dictionary of data with their names. It ususally contains the data itself and its metadata information.
         """
         pass
-

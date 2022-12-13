@@ -1,7 +1,7 @@
-set -ex
-python train.py --dataroot ../robotrain_pytorch/datasets/FLIR_np --name m_channel --model pix2pix --netG unet_128  --lambda_L1 100 --dataset_mode numpy --norm batch --pool_size 0 --input_nc=5
+eval "$(conda shell.bash hook)"
+conda activate /scratch/project/open-20-15/envs/pix2pix_env
 
-
+cd /scratch/project/open-20-15/robotrain
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
-cp $(find ./heappe/direct/set0013/2022-10-20-22553643-People_Anim_1/out/rgb/ -name "*.jpg./heappe/direct/set0013/2022-10-20-22553643-People_Anim_1/out/rgb/" -o -name "*.png") 
+python train.py --netG=unet_512 --dataroot ../robotrain_pytorch/datasets/FLIR_np --name test_threshold --ndf=100 --ngf=64 --batch_size=8 --n_layers_D=3 --lr=0.00005

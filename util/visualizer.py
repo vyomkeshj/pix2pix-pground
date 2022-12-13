@@ -90,7 +90,7 @@ class Visualizer():
             thermal = temp_dict['generated_thermal_val'][0]
             # clean extra bright pixels, replace them with mean (todo: improve)
             thermal[thermal >= 250] = np.mean(thermal)
-            person_mask = temp_dict['person_mask_val'][:,:,0]
+            person_mask = temp_dict['person_mask_val'][:, :, 0]
             np.putmask(thermal, (person_mask == 255), 245)
 
             ims_dict['highlighted_thermal_val'] = wandb.Image(thermal[np.newaxis, ...])
