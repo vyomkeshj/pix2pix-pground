@@ -52,7 +52,7 @@ class ValidationDataset:
         transform = alb.Compose([
             alb.RandomCrop(width=512, height=512),
             # alb.RGBShift (r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
-            alb.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
+            alb.CLAHE(clip_limit=2.0, tile_grid_size=(4, 4), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',

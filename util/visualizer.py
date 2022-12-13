@@ -1,11 +1,12 @@
+import cv2 as cv
+import ntpath
 import numpy as np
 import os
 import sys
-import ntpath
 import time
-from . import util
 from subprocess import Popen, PIPE
 
+from . import util
 
 try:
     import wandb
@@ -13,7 +14,7 @@ except ImportError:
     print('Warning: wandb package cannot be found. error.')
 
 
-def save_images(visuals, is_train = True):
+def save_images(visuals, is_train=True):
     """Save images to the wandb.
 
     Parameters:
@@ -23,7 +24,6 @@ def save_images(visuals, is_train = True):
     for label, im_data in visuals.items():
         imgs = util.tensor2im(im_data, is_train)
         for i, im in enumerate(imgs):
-
             ims_dict[label] = wandb.Image(im)
         wandb.log(ims_dict)
 
@@ -43,11 +43,11 @@ class Visualizer():
         self.name = opt.name
         self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
 
-
         self.use_wandb = True
         self.wandb_project_name = opt.wandb_project_name
 
-        self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
+        self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name,
+                                    config=opt) if not wandb.run else wandb.run
         self.wandb_run._label(repo='CycleGAN-and-pix2pix')
         self.current_epoch = 0
 
@@ -55,7 +55,7 @@ class Visualizer():
         """Reset the self.saved status"""
         self.saved = False
 
-    def display_current_results(self, visuals, epoch, is_val = False):
+    def display_current_results(self, visuals, epoch, is_val=False):
         """Display current results on wandb
 
         Parameters:
@@ -63,7 +63,6 @@ class Visualizer():
             epoch (int) - - the current epoch
             save_result (bool) - - if save the current results to an HTML file
         """
-
 
         ims_dict = {"epoch": epoch}
         for label, image in visuals.items():
@@ -75,13 +74,14 @@ class Visualizer():
 
             if "generated" in label:
                 image = (image[:, 0, :, :])
-            image_numpy = util.tensor2im(image*multiplier)
+
+            image_numpy = util.tensor2im(image * multiplier)
+            image_numpy[image_numpy >= 225] = np.mean(image_numpy)
 
             wandb_image = wandb.Image(image_numpy)
             ims_dict[label] = wandb_image
 
         self.wandb_run.log(ims_dict)
-
 
     def plot_current_losses(self, losses):
         """display the current losses on wandb display

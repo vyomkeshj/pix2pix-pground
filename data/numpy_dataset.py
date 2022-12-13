@@ -8,8 +8,8 @@ import albumentations as alb
 
 def rgb2gray(rgb):
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-    return gray
+    # gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+    return r
 
 
 def create_mask(mask_matrix, id2label_ids):
@@ -87,12 +87,12 @@ class NumpyDataset(BaseDataset):
         thermal_channel = current_npz_frames['B'][:, :, 0]
 
         transform = alb.Compose([
-            # alb.Rotate (limit=90, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.8),
+            alb.Rotate(limit=30, interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False, always_apply=True, p=0.5),
             alb.RandomCrop(width=512, height=512),
             alb.HorizontalFlip(p=0.5),
-            # alb.VerticalFlip(p=0.5),
-            alb.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, always_apply=True),
-            alb.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), always_apply=True),
+            alb.VerticalFlip(p=0.3),
+            alb.RGBShift(r_shift_limit=60, g_shift_limit=60, b_shift_limit=60, always_apply=False, p=0.7),
+            alb.CLAHE(clip_limit=2.0, tile_grid_size=(4, 4), always_apply=True),
         ], additional_targets={
             'image': 'image',
             'thermal_image': 'image',
