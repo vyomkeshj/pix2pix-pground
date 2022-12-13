@@ -15,7 +15,8 @@ class TestOptions(BaseOptions):
         parser = BaseOptions.initialize(self, parser)  # define shared options
 
         parser.add_argument('--num_test', type=int, default=50, help='how many test images to run')
-        # rewrite devalue values
+
         parser.set_defaults(model='test')
+        parser.add_argument('--phase', type=str, default='test', help='train, test, etc')
 
         return parser
