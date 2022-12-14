@@ -10,7 +10,11 @@ The model will be saved in `./checkpoints`
 
 ### To run inference using this model
 
-1. Run `create_validation_dataset.py` after editing it with the correct paths for the data. It will convert the image+mask pair into .npz format that the test script will be able to load and perform inference on.
+1. Run `create_validation_dataset.py --<input_directory> --<validation_dataroot>`
+It will convert the image+mask pair into .npz format that the test script will be able to load and perform inference on.
+    <b>Example for input_directory is the `select_validation` folder, it has both image and corresponding mask</b>
 
-2. Run `./scripts/test.sh` with the correct dataroot, you specify dataroot in `create_validation_dataset.py`
+2. Run `./scripts/test.sh` with the correct `--dataroot=<validation_dataroot>` and `--output_dir=<path_for_generated_thermal>`
+
+Note: for test.sh to work, you must ensure that the correct model is in the `./checkpoints/` directory of the repo clone
 

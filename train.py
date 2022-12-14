@@ -8,8 +8,9 @@ from util.visualizer import Visualizer
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
+    opt.use_wandb = True
 
-    test_dataset = ValidationDataset('validation_npz_sample')
+    test_dataset = ValidationDataset('./validation_dataroot')  # load val images to test while training
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     test_size = len(test_dataset)
     dataset_size = len(dataset)  # get the number of images in the dataset.
@@ -19,15 +20,14 @@ if __name__ == '__main__':
 
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
-    visualizer = Visualizer(opt)  # create a visualizer that display/save images and plots
-    total_iters = 0  # the total number of training iterations
+    visualizer = Visualizer(opt)  # create a visualizer that displays images and plots to wandb
+    total_iters = 0  # the total number of training iterations (incremented by batch size)
 
     for epoch in range(opt.epoch_count,
                        opt.n_epochs + opt.n_epochs_decay + 1):  # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
-        visualizer.reset()  # reset the visualizer: make sure it saves the results to HTML at least once every epoch
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
 
         for i, data in enumerate(dataset):  # inner loop within one epoch
@@ -42,8 +42,10 @@ if __name__ == '__main__':
             # model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             model.forward()
-            model.optimize_discriminator()
             model.optimize_generator()
+
+            if i % train_dis_every == 0:
+                model.optimize_discriminator()
 
             if total_iters % opt.display_freq == 0:  # display to wandb
                 model.compute_visuals()

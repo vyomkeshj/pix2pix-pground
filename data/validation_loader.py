@@ -12,13 +12,13 @@ from data.utils import load_frames
 def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
     rgb_channels = input_image[:, :, 0:3]
 
-    trees_mask = create_mask(segementation_channel, [2])
+    # get one hot mask by R channel value of the RGB seg mask
+    trees_mask = create_mask(segementation_channel, [97])
     person_mask = create_mask(segementation_channel, [102])
-    railroad_mask = create_mask(segementation_channel, [4, 1])
+    railroad_mask = create_mask(segementation_channel, [104, 106])
     sky_mask = create_mask(segementation_channel, [0])
 
     thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
-    # print(f"stacked thermal shape: {thermal_stack.shape}")
 
     transformed = transform(image=rgb_channels,
                             thermal_image=thermal_stack,

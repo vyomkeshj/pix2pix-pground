@@ -1,11 +1,8 @@
-import cv2 as cv
-import ntpath
 import numpy as np
 import os
 import sys
 import time
-from subprocess import Popen, PIPE
-
+from PIL import Image
 from . import util
 
 try:
@@ -14,7 +11,7 @@ except ImportError:
     print('Warning: wandb package cannot be found. error.')
 
 
-class Visualizer():
+class Visualizer:
     """This class includes several functions that can display/save images and print/save logging information.
 
     It uses a Python library 'visdom' for display, and a Python library 'dominate' (wrapped in 'HTML') for creating HTML files with images.
@@ -28,18 +25,34 @@ class Visualizer():
         """
         self.name = opt.name
         self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
+        self.save_path = opt.output_dir
+        self.use_wandb = opt.use_wandb
 
-        self.use_wandb = True
-        self.wandb_project_name = opt.wandb_project_name
-
-        self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name,
-                                    config=opt) if not wandb.run else wandb.run
-        self.wandb_run._label(repo='CycleGAN-and-pix2pix')
         self.current_epoch = 0
+        self.image_index = 0
+
+        if self.use_wandb:
+            self.wandb_project_name = opt.wandb_project_name
+            self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name,
+                                    config=opt) if not wandb.run else wandb.run
+            self.wandb_run._label(repo='robotrain_inference')
 
     def reset(self):
-        """Reset the self.saved status"""
-        self.saved = False
+        self.image_index = 0
+        self.current_epoch = 0
+
+    def save_generated_thermal(self, visuals):
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
+
+        generated_thermal_val = util.tensor2im(visuals['generated_thermal'])[0]
+        generated_thermal_val[generated_thermal_val >= 250] = np.mean(generated_thermal_val)
+
+        person_mask_val = util.tensor2im(visuals['person_mask'])[:, :, 0]
+        np.putmask(generated_thermal_val, (person_mask_val == 255), 245)
+        image_pil = Image.fromarray(generated_thermal_val)
+        image_pil.save(f"{self.save_path}/thermal_{self.image_index}.png")
+        self.image_index += 1
 
     def display_current_results(self, visuals, epoch, is_val=False):
         """Display current results on wandb
@@ -47,7 +60,7 @@ class Visualizer():
         Parameters:
             visuals (OrderedDict) - - dictionary of images to display or save
             epoch (int) - - the current epoch
-            save_result (bool) - - if save the current results to an HTML file
+            is_val (bool) - - if true, appends _val to image label
         """
 
         ims_dict = {"epoch": epoch}
@@ -107,22 +120,3 @@ class Visualizer():
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
-
-
-def save_image(image_numpy, image_path, aspect_ratio=1.0):
-    """Save a numpy image to the disk
-
-    Parameters:
-        image_numpy (numpy array) -- input numpy array
-        image_path (str)          -- the path of the image
-    """
-
-    image_pil = Image.fromarray(image_numpy)
-    print("shape = " + str(image_numpy.shape))
-    h, w, _ = image_numpy.shape
-
-    if aspect_ratio > 1.0:
-        image_pil = image_pil.resize((h, int(w * aspect_ratio)), Image.BICUBIC)
-    if aspect_ratio < 1.0:
-        image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
-    image_pil.save(image_path)
