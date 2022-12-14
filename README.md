@@ -2,7 +2,7 @@
 
 ### To run training and to create the model
 
-1. Clone the repository on Karolina
+1. Clone the repository on Karolina [or use preconfigured repo with checkpoint at: `/scratch/project/open-20-15/robotrain`</b>]
 2. Run `./scripts/train.sh` 
 
 This will load the data from `/scratch/project/open-20-15/robotrain_data` and train the model.
@@ -15,6 +15,5 @@ It will convert the image+mask pair into .npz format that the test script will b
     <b>Example for input_directory is the `select_validation` folder, it has both image and corresponding mask</b>
 
 2. Run `./scripts/test.sh` with the correct `--dataroot=<validation_dataroot>` and `--output_dir=<path_for_generated_thermal>`
-
 Note: for test.sh to work, you must ensure that the correct model is in the `./checkpoints/` directory of the repo clone
 

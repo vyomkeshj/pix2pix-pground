@@ -7,12 +7,6 @@ from data.base_dataset import BaseDataset
 from data.utils import load_frames
 
 
-def rgb2gray(rgb):
-    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-    # gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-    return r
-
-
 def create_mask(mask_matrix, id2label_ids):
     """ Takes a mask matrix and a label id, returns a boolean mask with just the areas with the label id """
     # print(mask_matrix)
