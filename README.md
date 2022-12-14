@@ -1,7 +1,7 @@
 # Approximate Thermal image from RGB+Mask
 
 ### To run training and to create the model
-
+Install miniconda, (https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html):
 1. Clone the repository on Karolina [or use preconfigured repo with checkpoint at: `/scratch/project/open-20-15/robotrain`</b>]
 2. Run `./scripts/train.sh` 
 
