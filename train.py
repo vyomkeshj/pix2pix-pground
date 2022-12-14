@@ -9,6 +9,7 @@ from util.visualizer import Visualizer
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
     opt.use_wandb = True
+    opt.output_dir = None
 
     test_dataset = ValidationDataset('./validation_dataroot')  # load val images to test while training
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
@@ -17,6 +18,7 @@ if __name__ == '__main__':
 
     test_every_steps = opt.batch_size * 4  # test every n epochs and publish validation results
     viz_sample_every_steps = opt.batch_size * 2  # test every n epochs and publish validation results
+    train_dis_every = opt.train_dis_every
 
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
