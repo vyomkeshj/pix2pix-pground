@@ -7,6 +7,7 @@ from PIL import Image
 from data.base_dataset import BaseDataset
 from data.numpy_dataset import create_mask
 from data.utils import load_frames, get_transform
+import re
 
 
 def get_transformed_images_masks(input_image, seg_channel, thermal_image, transform):
@@ -47,19 +48,24 @@ def get_transformed_images_masks(input_image, seg_channel, thermal_image, transf
         },
 
 
-class ValidationDataset:
+class ValidationImageDataset:
 
-    def __init__(self, path):
-        self.data_path = path  # os.path.join(opt.dataroot, opt.phase)  # get the image directory
+    def __init__(self, path_rgb, path_mask):
+        self.data_path = path_rgb
+        self.mask_path = path_mask
+
         self.input_files = sorted(load_frames(self.data_path, float("inf")))  # get image paths
 
     def __getitem__(self, index):
-        filename = self.input_files[index]
-        current_npz_frames = np.load(filename)
+        rgb_file_path = self.input_files[index]
+        rgb_file_name = os.path.basename(rgb_file_path)
+        file_index = re.search('\d+', rgb_file_name).group(0)
 
-        rgb_channels = current_npz_frames['A'][:, :, 0:3]
-        mask_channel = current_npz_frames['A'][:, :, 3]
-        thermal_channel = current_npz_frames['B'][:, :, 0]
+        rgb_channels = np.array(Image.open(rgb_file_path))
+        # load mask and select r channel
+        mask_channel = np.array(Image.open(os.path.join(self.mask_path, f"gt{file_index}.png")))[:, :, 0]
+
+        thermal_channel = np.zeros_like(mask_channel)
         transform = alb.Compose([
             alb.Resize(width=512, height=512, interpolation=1, always_apply=True),
             # alb.RandomCrop(width=512, height=512),
@@ -89,7 +95,7 @@ class ValidationDataset:
         mask_dict = dict(map(lambda item: (item[0], torch.tensor(item[1][np.newaxis, ...])), mask_dict.items()))
         return {'rgb_channels': torch.tensor(transformed_image[np.newaxis, ...]),
                 'thermal_channel': torch.tensor(transformed_thermal[np.newaxis, ...]),
-                'mask_dict': mask_dict}, filename
+                'mask_dict': mask_dict}, file_index
 
     def __len__(self):
         """Return the total number of images in the dataset."""

@@ -38,6 +38,10 @@ class BaseOptions:
         parser.add_argument('--output_nc', type=int, default=1,
                             help='# of output image channels: 3 for RGB and 1 for grayscale')
 
+        parser.add_argument('--image_height', type=int, default=540, help='height of the saved image')
+        parser.add_argument('--image_width', type=int, default=940, help='width of the saved image')
+
+
         parser.add_argument('--name', type=str, default='experiment_name',
                             help='name of the experiment. It decides where to store samples and models')
 
@@ -71,7 +75,7 @@ class BaseOptions:
         parser.add_argument('--suffix', default='', type=str,
                             help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         # wandb parameters
-        parser.add_argument('--wandb_project_name', type=str, default='CycleGAN-and-pix2pix',
+        parser.add_argument('--wandb_project_name', type=str, default='robotrain',
                             help='specify wandb project name')
         self.initialized = True
         return parser

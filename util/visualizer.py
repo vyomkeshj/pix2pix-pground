@@ -28,6 +28,9 @@ class Visualizer:
         self.save_path = opt.output_dir
         self.use_wandb = opt.use_wandb
 
+        self.image_height = opt.image_height
+        self.image_width = opt.image_width
+
         self.current_epoch = 0
         self.image_index = 0
 
@@ -38,21 +41,36 @@ class Visualizer:
             self.wandb_run._label(repo='robotrain_inference')
 
     def reset(self):
-        self.image_index = 0
         self.current_epoch = 0
 
-    def save_generated_thermal(self, visuals):
+    def save_generated_thermal(self, visuals, index):
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
 
         generated_thermal_val = util.tensor2im(visuals['generated_thermal'])[0]
         generated_thermal_val[generated_thermal_val >= 250] = np.mean(generated_thermal_val)
 
+        # Thermo highlight using the masks:
         person_mask_val = util.tensor2im(visuals['person_mask'])[:, :, 0]
         np.putmask(generated_thermal_val, (person_mask_val == 255), 245)
+
+        car_mask_val = util.tensor2im(visuals['car_mask'])[:, :, 0]
+        np.putmask(generated_thermal_val, (car_mask_val == 255), 245)
+
+        van_mask_val = util.tensor2im(visuals['van_mask'])[:, :, 0]
+        np.putmask(generated_thermal_val, (van_mask_val == 255), 245)
+
+        animal_mask_val = util.tensor2im(visuals['animal_mask'])[:, :, 0]
+        np.putmask(generated_thermal_val, (animal_mask_val == 255), 245)
+
+        railroad_mask = util.tensor2im(visuals['railroad_mask'])[:, :, 0]
+        np.putmask(generated_thermal_val, (railroad_mask == 255), 100)
+
         image_pil = Image.fromarray(generated_thermal_val)
-        image_pil.save(f"{self.save_path}/thermal_{self.image_index}.png")
-        self.image_index += 1
+        # Resize back
+
+        image_pil = image_pil.resize((self.image_width, self.image_height), Image.ANTIALIAS)
+        image_pil.save(f"{self.save_path}/thermal_{index}.png")
 
     def display_current_results(self, visuals, epoch, is_val=False):
         """Display current results on wandb
