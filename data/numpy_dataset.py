@@ -2,9 +2,9 @@ import albumentations as alb
 import numpy as np
 import os
 from PIL import Image
-
+import torch
 from data.base_dataset import BaseDataset
-from data.utils import load_frames
+from data.utils import load_frames, get_transform
 
 
 def create_mask(mask_matrix, id2label_ids):
@@ -35,7 +35,12 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask=railroad_mask,
                             sky_mask=sky_mask)
 
-    return transformed['image'] / 255., (transformed['thermal_image'][:, :, 0]) / 255., \
+    rgb_normalizer = get_transform(False)
+    transformed_image = torch.permute(rgb_normalizer(transformed['image']), (1, 2, 0))
+    gray_normalizer = get_transform(True)
+    transformed_thermal = torch.permute(gray_normalizer(transformed['thermal_image']), (1, 2, 0))
+
+    return transformed_image, transformed_thermal[:, :, 0], \
         {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],

@@ -6,17 +6,17 @@ from PIL import Image
 
 from data.base_dataset import BaseDataset
 from data.numpy_dataset import create_mask
-from data.utils import load_frames
+from data.utils import load_frames, get_transform
 
 
-def get_transformed_images_masks(input_image, segementation_channel, thermal_image, transform):
+def get_transformed_images_masks(input_image, seg_channel, thermal_image, transform):
     rgb_channels = input_image[:, :, 0:3]
 
     # get one hot mask by R channel value of the RGB seg mask
-    trees_mask = create_mask(segementation_channel, [97])
-    person_mask = create_mask(segementation_channel, [102])
-    railroad_mask = create_mask(segementation_channel, [104, 106])
-    sky_mask = create_mask(segementation_channel, [0])
+    trees_mask = create_mask(seg_channel, [97])
+    person_mask = create_mask(seg_channel, [102])
+    railroad_mask = create_mask(seg_channel, [104, 106])
+    sky_mask = create_mask(seg_channel, [0])
 
     thermal_stack = np.dstack([thermal_image, thermal_image, thermal_image])
 
@@ -27,7 +27,7 @@ def get_transformed_images_masks(input_image, segementation_channel, thermal_ima
                             railroad_mask=railroad_mask,
                             sky_mask=sky_mask)
 
-    return transformed['image'] / 255., (transformed['thermal_image'][:, :, 0]) / 255., \
+    return transformed['image'], (transformed['thermal_image'][:, :, 0]), \
         {
             'person_mask': transformed['person_mask'][..., np.newaxis],
             'trees_mask': transformed['trees_mask'][..., np.newaxis],
@@ -63,6 +63,9 @@ class ValidationDataset:
                                                                                          mask_channel,
                                                                                          thermal_channel,
                                                                                          transform)
+        normalizer = get_transform()
+        transformed_image = normalizer(transformed_image)
+        transformed_image = torch.permute(transformed_image, (1, 2, 0))
 
         mask_dict = dict(map(lambda item: (item[0], torch.tensor(item[1][np.newaxis, ...])), mask_dict.items()))
         return {'rgb_channels': torch.tensor(transformed_image[np.newaxis, ...]),

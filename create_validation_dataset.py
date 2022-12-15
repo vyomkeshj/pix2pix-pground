@@ -20,7 +20,7 @@ if __name__ == '__main__':
     input_directory = args.input_directory
     validation_dataroot = args.validation_dataroot
 
-    # # specify the directory containing the image pairs
+    # # Example:
     # input_directory = './select_validation'
     # # directory where the output .npz files will be saved, you will pass this as argument in `scripts/test_pix2pix.sh`
     # validation_dataroot = './validation_dataroot'

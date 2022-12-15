@@ -8,12 +8,6 @@ from .base_model import BaseModel
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
-
-    The model training requires '--dataset_mode aligned' dataset.
-    By default, it uses a '--netG unet256' U-Net generator,
-    a '--netD basic' discriminator (PatchGAN),
-    and a '--gan_mode' vanilla GAN loss (the cross-entropy objective used in the orignal GAN paper).
-
     pix2pix paper: https://arxiv.org/pdf/1611.07004.pdf
     """
 
@@ -46,12 +40,15 @@ class Pix2PixModel(BaseModel):
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
-        # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
+        # specify the training losses you want to print out. The training/test scripts
+        # will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
-        # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
+        # specify the images you want to save/display. The training/test
+        # scripts will call <BaseModel.get_current_visuals>
         self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'trees_mask',
                              'sky_mask', 'railroad_mask']
-        # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
+        # specify the models you want to save to the disk. The training/test scripts will call
+        # <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G', 'D']
         else:  # during test time, only load G
@@ -59,8 +56,10 @@ class Pix2PixModel(BaseModel):
         # define networks (both generator and discriminator)
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+        self.is_rgb_version = True if "rgb" in opt.version else False
 
-        if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images; Therefore, #channels for D is input_nc + output_nc
+        if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images;
+            # Therefore, #channels for D is input_nc + output_nc
             self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
@@ -95,8 +94,9 @@ class Pix2PixModel(BaseModel):
         self.railroad_mask = self.mask_dict['railroad_mask']
 
         # created a stacked frame with rgb + masks
-        for key, value in self.mask_dict.items():
-            self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=3)
+        if not self.is_rgb_version:
+            for key, value in self.mask_dict.items():
+                self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=3)
         self.stacked_A = torch.permute(self.stacked_A, (0, 3, 1, 2)).float()
 
     def forward(self):

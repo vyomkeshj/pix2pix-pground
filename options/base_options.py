@@ -29,10 +29,11 @@ class BaseOptions:
                                  ' The basic model is a 70x70 PatchGAN.'
                                  ' n_layers allows you to specify the layers in the discriminator')
 
-        parser.add_argument('--netG', type=str, default='unet_512', help='specify generator architecture [unet_512]')
+        parser.add_argument('--netG', type=str, default='unet_256', help='specify generator architecture [unet_512, unet_256]')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
+        parser.add_argument('--version', type=str, default='rgb', help='[rgb, w_seg]')
 
-        parser.add_argument('--input_nc', type=int, default=7,
+        parser.add_argument('--input_nc', type=int, default=3,
                             help='# of input image channels: 3 for RGB and 1 for grayscale')
         parser.add_argument('--output_nc', type=int, default=1,
                             help='# of output image channels: 3 for RGB and 1 for grayscale')

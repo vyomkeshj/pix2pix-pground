@@ -20,7 +20,8 @@ def tensor2im(input_image, imtype=np.uint8):
     if image_numpy.shape[0] == 3:
         image_numpy = np.transpose(image_numpy, (1, 2, 0))
 
-    return (image_numpy * 255.).astype(imtype)
+    return ((image_numpy + 1) / 2.0 * 255.0).astype(imtype)
+    # return (image_numpy * 255.).astype(imtype)
 
 
 def mkdirs(paths):

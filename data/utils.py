@@ -1,4 +1,5 @@
 import os
+import torchvision.transforms as transforms
 
 SUPPORTED_EXTENSIONS = [
     '.npz'
@@ -18,3 +19,14 @@ def load_frames(dir, max_dataset_size=float("inf")):
             path = os.path.join(root, fname)
             images.append(path)
     return images[:min(max_dataset_size, len(images))]
+
+
+def get_transform(grayscale=False):
+    transform_list = []
+
+    transform_list += [transforms.ToTensor()]
+    if grayscale:
+        transform_list += [transforms.Normalize((0.5,), (0.5,))]
+    else:
+        transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    return transforms.Compose(transform_list)
