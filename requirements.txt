@@ -7,3 +7,4 @@ pillow~=9.2.0
 opencv-python~=4.6.0.66
 scikit-video~=1.1.11
 scipy~=1.9.1
+albumentations~=1.3.0
