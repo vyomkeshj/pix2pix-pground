@@ -1,7 +1,7 @@
 import time
 
 from data import create_dataset
-from data.validation_loader import ValidationDataset
+# from data.validation_loader import ValidationDataset
 from models import create_model
 from options.train_options import TrainOptions
 from util.visualizer import Visualizer
@@ -11,9 +11,9 @@ if __name__ == '__main__':
     opt.use_wandb = True
     opt.output_dir = None
 
-    test_dataset = ValidationDataset('./validation_dataroot')  # load val images to test while training
+    # test_dataset = ValidationDataset('./validation_dataroot')  # load val images to test while training
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
-    test_size = len(test_dataset)
+    # test_size = len(test_dataset)
     dataset_size = len(dataset)  # get the number of images in the dataset.
 
     test_every_steps = opt.batch_size * 4  # test every n epochs and publish validation results
@@ -53,15 +53,15 @@ if __name__ == '__main__':
                 model.compute_visuals()
                 visualizer.display_current_results(model.get_current_visuals(), epoch)
 
-            if total_iters % test_every_steps == 0:
-                for t_i, test_data in enumerate(test_dataset):
-                    if t_i >= test_size:
-                        break
-                    model.set_input(test_data)  # unpack data from data loader
-                    model.test()  # run inference
-
-                    visuals = model.get_current_visuals()  # get image results
-                    visualizer.display_current_results(visuals, epoch, is_val=True)
+            # if total_iters % test_every_steps == 0:
+            #     for t_i, test_data in enumerate(test_dataset):
+            #         if t_i >= test_size:
+            #             break
+            #         model.set_input(test_data)  # unpack data from data loader
+            #         model.test()  # run inference
+            #
+            #         visuals = model.get_current_visuals()  # get image results
+            #         visualizer.display_current_results(visuals, epoch, is_val=True)
 
             if total_iters % opt.print_freq == 0:  # print training losses and save logging information to the disk
                 losses = model.get_current_losses()

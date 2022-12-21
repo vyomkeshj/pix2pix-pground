@@ -6,7 +6,7 @@ import torch
 from PIL import Image
 
 
-def tensor2im(input_image, imtype=np.uint8):
+def tensor2im(input_image, imtype=np.uint8, renorm=True):
     """"Converts a Tensor array into a numpy image array.
     Parameters:
         input_image (tensor) --  the input image tensor array
@@ -20,8 +20,10 @@ def tensor2im(input_image, imtype=np.uint8):
     if image_numpy.shape[0] == 3:
         image_numpy = np.transpose(image_numpy, (1, 2, 0))
 
-    return ((image_numpy + 1) / 2.0 * 255.0).astype(imtype)
-    # return (image_numpy * 255.).astype(imtype)
+    if renorm:
+        return ((image_numpy + 1) / 2.0 * 255.0).astype(imtype)
+    else:
+        return (image_numpy * 255.).astype(imtype)
 
 
 def mkdirs(paths):

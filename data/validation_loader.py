@@ -4,8 +4,6 @@ import os
 import torch
 from PIL import Image
 
-from data.base_dataset import BaseDataset
-from data.numpy_dataset import create_mask
 from data.utils import load_frames, get_transform
 
 

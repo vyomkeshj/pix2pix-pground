@@ -45,9 +45,9 @@ class Pix2PixModel(BaseModel):
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         # specify the images you want to save/display. The training/test
         # scripts will call <BaseModel.get_current_visuals>
-        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal', 'person_mask', 'trees_mask',
-                             'sky_mask', 'railroad_mask', 'car_mask', 'van_mask', 'animal_mask']
+        self.visual_names = ['rgb_channels', 'thermal_channel', 'generated_thermal']
         # specify the models you want to save to the disk. The training/test scripts will call
+        # <BaseModel.save_networks> and <BaseModel.load_networks>
         # <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G', 'D']
@@ -81,30 +81,11 @@ class Pix2PixModel(BaseModel):
 
         The option 'direction' can be used to swap images in domain A and domain B.
         """
-        self.rgb_channels = input['rgb_channels'].to(self.device)
+        self.rgb_channels = torch.permute(input['rgb_channels'], (0, 3, 1, 2)).to(self.device)
         # print(f"shape of thermal channel: {input['thermal_channel'].shape}")
         self.thermal_channel = torch.permute(input['thermal_channel'][..., np.newaxis], (0, 3, 1, 2)).float().to(
             self.device)
-        self.mask_dict = input['mask_dict']
-
         self.stacked_A = self.rgb_channels
-        self.person_mask = self.mask_dict['person_mask']
-        self.trees_mask = self.mask_dict['trees_mask']
-        self.sky_mask = self.mask_dict['sky_mask']
-        self.railroad_mask = self.mask_dict['railroad_mask']
-
-        # masks exclusively for thermo highlight
-        self.car_mask = self.mask_dict['car_mask']
-        self.van_mask = self.mask_dict['van_mask']
-        self.animal_mask = self.mask_dict['animal_mask']
-
-
-        # created a stacked frame with rgb + masks
-        if not self.is_rgb_version:
-            for key, value in self.mask_dict.items():
-                if "car" not in key and "van" not in key and "animal" not in key:
-                    self.stacked_A = torch.concat((self.stacked_A, value.to(self.device)), axis=3)
-        self.stacked_A = torch.permute(self.stacked_A, (0, 3, 1, 2)).float()
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""

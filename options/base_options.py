@@ -47,7 +47,7 @@ class BaseOptions:
 
         parser.add_argument('--dataroot', required=True,
                             help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
-        parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
+        parser.add_argument('--gpu_ids', type=str, default='-1', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='pix2pix', help='chooses which model to use. [pix2pix]')
@@ -63,7 +63,7 @@ class BaseOptions:
                             help='chooses how datasets are loaded. [unaligned | aligned | single | colorization]')
         parser.add_argument('--serial_batches', action='store_true',
                             help='if true, takes images in order to make batches, otherwise takes them randomly')
-        parser.add_argument('--num_threads', default=16, type=int, help='# threads for loading data')
+        parser.add_argument('--num_threads', default=8, type=int, help='# threads for loading data')
         parser.add_argument('--max_dataset_size', type=int, default=float("inf"),
                             help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
         # additional parameters
@@ -75,7 +75,7 @@ class BaseOptions:
         parser.add_argument('--suffix', default='', type=str,
                             help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
         # wandb parameters
-        parser.add_argument('--wandb_project_name', type=str, default='robotrain',
+        parser.add_argument('--wandb_project_name', type=str, default='segementer',
                             help='specify wandb project name')
         self.initialized = True
         return parser

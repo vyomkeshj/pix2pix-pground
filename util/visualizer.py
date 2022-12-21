@@ -47,25 +47,8 @@ class Visualizer:
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
 
-        generated_thermal_val = util.tensor2im(visuals['generated_thermal'])[0]
-        generated_thermal_val[generated_thermal_val >= 250] = np.mean(generated_thermal_val)
-
-        # Thermo highlight using the masks:
-        person_mask_val = util.tensor2im(visuals['person_mask'])[:, :, 0]
-        np.putmask(generated_thermal_val, (person_mask_val == 255), 245)
-
-        car_mask_val = util.tensor2im(visuals['car_mask'])[:, :, 0]
-        np.putmask(generated_thermal_val, (car_mask_val == 255), 245)
-
-        van_mask_val = util.tensor2im(visuals['van_mask'])[:, :, 0]
-        np.putmask(generated_thermal_val, (van_mask_val == 255), 245)
-
-        animal_mask_val = util.tensor2im(visuals['animal_mask'])[:, :, 0]
-        np.putmask(generated_thermal_val, (animal_mask_val == 255), 245)
-
-        railroad_mask = util.tensor2im(visuals['railroad_mask'])[:, :, 0]
-        np.putmask(generated_thermal_val, (railroad_mask == 255), 100)
-
+        generated_thermal_val = util.tensor2im(visuals['generated_thermal'], renorm=False)[0]
+        # generated_thermal_val[generated_thermal_val >= 250] = np.mean(generated_thermal_val)
         image_pil = Image.fromarray(generated_thermal_val)
         # Resize back
 
@@ -85,20 +68,16 @@ class Visualizer:
         temp_dict = {}
         for label, image in visuals.items():
             label = label + f"_val" if is_val else label
-            multiplier = 1
-            if "mask" in label:
-                multiplier = 100
 
-            if "person_mask_val" in label:
-                temp_dict['person_mask_val'] = util.tensor2im(image)
-
+            renorm = False
             if "generated_thermal_val" in label:
-                temp_dict['generated_thermal_val'] = util.tensor2im(image)
+                temp_dict['generated_thermal_val'] = util.tensor2im(image, renorm = False)
 
             if "generated" in label:
                 image = image[:, 0, :, :]
+                renorm = False
 
-            image_numpy = util.tensor2im(image * multiplier)
+            image_numpy = util.tensor2im(image, renorm=renorm)
 
             wandb_image = wandb.Image(image_numpy)
             ims_dict[label] = wandb_image
@@ -107,9 +86,6 @@ class Visualizer:
             thermal = temp_dict['generated_thermal_val'][0]
             # clean extra bright pixels, replace them with mean (todo: improve)
             thermal[thermal >= 250] = np.mean(thermal)
-            person_mask = temp_dict['person_mask_val'][:, :, 0]
-            np.putmask(thermal, (person_mask == 255), 245)
-
             ims_dict['highlighted_thermal_val'] = wandb.Image(thermal[np.newaxis, ...])
         self.wandb_run.log(ims_dict)
 
